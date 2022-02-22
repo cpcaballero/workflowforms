@@ -1,0 +1,21 @@
+version: "3.5"
+
+services:
+  db-wf:
+    container_name: mongodb-wf
+    image: mongo
+    ports:
+      - 27017:27017
+    volumes: 
+      - ./mongodb:/data/lib
+    restart: unless-stopped
+    environment: 
+      MONGO_INITDB_ROOT_USERNAME: wf_user 
+      MONGO_INITDB_ROOT_PASSWORD: wf_pass@2022
+      MONGO_INITDB_DATABASE: workflow_forms
+volumes:
+  mongo-data:
+    driver: local
+networks:
+  default:
+    name: workflow-forms-app-network
