@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
+import { InputTextarea } from "primereact/inputtextarea";
 import { Divider } from 'primereact/divider';
 import { Dropdown, DropdownChangeParams } from 'primereact/dropdown';
 import { Panel } from 'primereact/panel';
@@ -25,6 +26,7 @@ interface iFormItem {
 
 interface iFormData {
   formTitle: string,
+  formSubtitle: string,
   formItems: iFormItem[],
 };
 
@@ -51,13 +53,15 @@ export const FormBuilder: React.FunctionComponent = () => {
   const user = useCheckLogin();
   const { formId } = useParams();
   const navigate = useNavigate();
-  const { useState, useEffect, useMemo } = React;
+  const { useState, useEffect, useMemo, useRef } = React;
   const droppableId = useMemo(() => uuidv4(), []);
   const [formData, setFormData] = useState<iFormData>({
     formTitle: "",
+    formSubtitle: "",
     formItems: []
   });
   const [profile, setProfile] = useState<any>();
+  const addDropdownRef = useRef<null | HTMLDivElement>(null);
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     return setFormData({
@@ -85,11 +89,15 @@ export const FormBuilder: React.FunctionComponent = () => {
       acceptTypes: [],
     }
     tempFormItems.push(tempFormItem);
-    setFormData({ ...formData, formItems: tempFormItems });
+    addDropdownRef?.current?.scrollIntoView({ behavior: "smooth" })
+    setFormData({
+      ...formData,
+      formItems: tempFormItems
+    });
   }
 
   const addFieldDropdown = (
-    <div>
+    <div ref={addDropdownRef}>
       <Dropdown
         options={fieldTypes}
         onChange={addField}
@@ -417,19 +425,21 @@ export const FormBuilder: React.FunctionComponent = () => {
     <div className={"p-pt-6 p-px-6"}>
       <div className="p-d-flex p-flex-column p-jc-start">
         <div className="p-d-flex p-flex-row p-jc-between p-grid">
-          <div className="p-d-flex p-flex-row p-sm-10 p-md-8 p-lg-6">
-            <h1 className="p-mb-0 p-mr-2">Form Builder:</h1>
-            <InputText
-              className="p-col"
-              value={formData.formTitle}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  formTitle: e.target.value
-                })
-              }
-              placeholder="Enter your form title here"
-            />
+          <div className="p-d-flex p-flex-column p-col p-sm-10 p-md-8 p-lg-6">
+            <div className="p-d-flex p-flex-row p-ai-center">
+              <h1 className="p-mb-0 p-mr-2">Form Builder:</h1>
+              <InputText
+                className="p-col"
+                value={formData.formTitle}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    formTitle: e.target.value
+                  })
+                }
+                placeholder="Enter your form title here"
+              />
+            </div>
           </div>
           <div className="p-d-flex p-ai-center">
             <Button
@@ -442,7 +452,23 @@ export const FormBuilder: React.FunctionComponent = () => {
             />
           </div>
         </div>
+        <div className="p-d-flex p-col-10 p-flex-column p-ac-stretch p-mt-3">
+          <h3 className="p-mb-0 p-mr-2">Subtitle/Description/Instructions:</h3>
+          <InputTextarea
+            rows={2}
+            autoResize
+            value={formData.formSubtitle}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                formSubtitle: e.target.value
+              })
+            }
+            placeholder="Enter subtitle/description/short instructions here"
+          />
+        </div>
         <Divider />
+        <h2>Items/Questions:</h2>
         <DragDropContext
           onDragEnd={(param) => {
             const currentFormItems = [...formData.formItems];
@@ -458,7 +484,7 @@ export const FormBuilder: React.FunctionComponent = () => {
             }
           }}
         >
-          <div className="p-sm-12 p-md-8 p-as-center">
+          <div className="p-sm-12 p-md-8 p-as-center p-mb-5">
             <Droppable droppableId={droppableId}>
               {(provided, _) => (
                 <div
