@@ -8,11 +8,14 @@ import { Panel } from 'primereact/panel';
 import { InputSwitch } from 'primereact/inputswitch';
 import { RadioButton } from 'primereact/radiobutton';
 import { Checkbox } from 'primereact/checkbox'
+import { Toast } from 'primereact/toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { useNavigate, useParams } from "react-router-dom";
 import useCheckLogin from "../../utils/useCheckLogin";
 import { v4 as uuidv4 } from 'uuid';
+
+import styles from "./FormBuilder.module.css";
 
 interface iFormItem {
   text: string,
@@ -36,6 +39,17 @@ interface iUpdateField {
   field: string,
   choiceIndex?: number,
   checked?: boolean,
+}
+
+interface iItemError {
+  uuid: string,
+  errors: string[],
+}
+
+interface iFormError {
+  formTitle: string,
+  formEntries: string,
+  formItems: iItemError[],
 }
 
 const fieldTypes = [
@@ -62,6 +76,15 @@ export const FormBuilder: React.FunctionComponent = () => {
   });
   const [profile, setProfile] = useState<any>();
   const addDropdownRef = useRef<null | HTMLDivElement>(null);
+  const toastRef = useRef<null | Toast>(null);
+
+  const [formError, setFormError] = useState<iFormError>({
+    formTitle: "",
+    formEntries: "",
+    formItems: []
+  });
+  const { formTitle, formSubtitle, formItems } = formData;
+
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     return setFormData({
@@ -162,6 +185,9 @@ export const FormBuilder: React.FunctionComponent = () => {
   }
 
   const renderField = (formItem: iFormItem) => {
+    const errorMsg = formError.formItems.find(item => item.uuid === formItem.uuid)?.errors;
+    const invalidClass = errorMsg && "p-invalid";
+    console.log(errorMsg);
     switch (formItem.schema) {
       case "TEXT":
       case "LONG_TEXT":
@@ -184,7 +210,6 @@ export const FormBuilder: React.FunctionComponent = () => {
                 value={formItem.text}
                 placeholder="Enter question here"
               />
-
               <InputText
                 autoFocus
                 onChange={(e) => updateField({
@@ -192,10 +217,15 @@ export const FormBuilder: React.FunctionComponent = () => {
                   uuid: formItem.uuid,
                   field: "subtext",
                 })}
-                className="p-inputtext-sm"
+                className="p-inputtext-sm p-my-2"
                 value={formItem.subtext}
                 placeholder="Optional subtext here"
               />
+              {
+                errorMsg?.map(msg => (
+                  <small className="p-error block">{msg}</small>
+                ))
+              }
             </div>
             <div className="p-col-2 p-d-flex p-ai-center">
               <InputSwitch
@@ -237,7 +267,7 @@ export const FormBuilder: React.FunctionComponent = () => {
                   uuid: formItem.uuid,
                   field: "subtext",
                 })}
-                className="p-inputtext-sm p-my-2"
+                className="p-inputtext-sm p-my-2 p-my-2"
                 value={formItem.subtext}
                 placeholder="Optional subtext here"
               />
@@ -253,12 +283,20 @@ export const FormBuilder: React.FunctionComponent = () => {
                 {
                   formItem.choices?.map((choice, index) => (
                     <li className="p-d-flex p-flex-row p-ai-center">
-                      <RadioButton
-                        checked={false}
-                        className="p-mr-3"
-                      />
+                      {formItem.schema === "SINGLE_SELECT" && (
+                        <RadioButton
+                          checked={false}
+                          className="p-mr-3"
+                        />
+                      )}
+                      {formItem.schema === "MULTIPLE_SELECT" && (
+                        <Checkbox
+                          checked={false}
+                          className="p-mr-3"
+                        />
+                      )}
                       <InputText
-                        className="p-inputtext-sm p-my-2"
+                        className="p-inputtext-sm p-my-2 p-my-2"
                         value={choice}
                         onChange={(e) => updateField({
                           value: e.target.value,
@@ -279,6 +317,11 @@ export const FormBuilder: React.FunctionComponent = () => {
                   ))
                 }
               </ul>
+              {
+                errorMsg?.map(msg => (
+                  <small className="p-error block">{msg}</small>
+                ))
+              }
             </div>
             <div className="p-col-2 p-d-flex p-ai-center">
               <InputSwitch
@@ -337,7 +380,7 @@ export const FormBuilder: React.FunctionComponent = () => {
                   uuid: formItem.uuid,
                   field: "subtext",
                 })}
-                className="p-inputtext-sm p-my-2"
+                className="p-inputtext-sm p-my-2 p-my-2"
                 value={formItem.subtext}
                 placeholder="Optional subtext here"
               />
@@ -368,8 +411,12 @@ export const FormBuilder: React.FunctionComponent = () => {
                     </li>
                   ))
                 }
-
               </ul>
+              {
+                errorMsg?.map(msg => (
+                  <small className="p-error block">{msg}</small>
+                ))
+              }
             </div>
             <div className="p-col-2 p-d-flex p-ai-center">
               <InputSwitch
@@ -392,6 +439,7 @@ export const FormBuilder: React.FunctionComponent = () => {
     options: any,
     itemNumber: number,
     uuid: string,
+    schema: string,
     dragHandleProps: any
   ) => {
     const className = `${options.className} p-d-flex p-jc-between`;
@@ -406,7 +454,7 @@ export const FormBuilder: React.FunctionComponent = () => {
             {...dragHandleProps}
           >
           </i>
-          Form Entry #{itemNumber}
+          Form Entry #{itemNumber}: {fieldTypes.find(type => type.value === schema)?.name}
         </span>
         <span>
           <Button
@@ -421,36 +469,102 @@ export const FormBuilder: React.FunctionComponent = () => {
     )
   }
 
+  const hasEmptyFields = () => {
+    let isEmptyFields = false;
+    let errors: iFormError = {
+      formTitle: "",
+      formEntries: "",
+      formItems: []
+    }
+    if (formTitle === "") {
+      isEmptyFields = true;
+      errors.formTitle = "A Form Title is required.";
+    }
+    if(formData.formItems.length === 0) {
+      isEmptyFields = true;
+      errors.formEntries = "A Form must have at least one Form Entry.";
+    }
+
+    formItems.forEach(formItem => {
+      let itemError: iItemError = {
+        uuid: formItem.uuid,
+        errors: []
+      }
+      if (formItem.text.trim() === "") {
+        itemError.errors.push("A Form Item text/question is required");
+      }
+      if (["SINGLE_SELECT", "MULTIPLE_SELECT"].includes(formItem.schema)) {
+        if (formItem.choices.length < 2) {
+          itemError.errors.push("Single and Multiple Select Form Items need at least two non-blank choices.");
+        } else {
+          if (formItem.choices.includes("")) {
+            itemError.errors.push("Choices cannot be blank.");
+          }
+        }
+      }
+      if (formItem.schema === "IMAGE") {
+        if (formItem.acceptTypes.length === 0) {
+          itemError.errors.push("A filetype to accept for file upload is required.");
+        }
+      }
+
+      if (itemError.errors.length > 0) {
+        isEmptyFields = true;
+        errors.formItems.push(itemError);
+      }
+    });
+    setFormError(errors);
+
+
+    return isEmptyFields;
+  }
+
+  const onSave = () => {
+    if (hasEmptyFields()) {
+      toastRef?.current?.show({
+        severity: "error",
+        summary: "Form Save Failed",
+        detail: "Please check fields and notes highlighted in red.",
+        life: 5000
+      })
+    }
+  }
+
   return (
     <div className={"p-pt-6 p-px-6"}>
       <div className="p-d-flex p-flex-column p-jc-start">
-        <div className="p-d-flex p-flex-row p-jc-between p-grid">
+        <div className={"p-d-flex p-flex-row p-jc-between p-grid " + styles.stickyHeader} >
           <div className="p-d-flex p-flex-column p-col p-sm-10 p-md-8 p-lg-6">
             <div className="p-d-flex p-flex-row p-ai-center">
               <h1 className="p-mb-0 p-mr-2">Form Builder:</h1>
-              <InputText
-                className="p-col"
-                value={formData.formTitle}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    formTitle: e.target.value
-                  })
-                }
-                placeholder="Enter your form title here"
-              />
+              <div className="p-d-flex p-flex-column p-col">
+                <InputText
+                  className={formError.formTitle && "p-invalid"}
+                  value={formData.formTitle}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      formTitle: e.target.value
+                    })
+                  }
+                  placeholder="Enter your form title here"
+                />
+                <small className="p-error">{formError.formTitle}</small>
+              </div>
             </div>
           </div>
           <div className="p-d-flex p-ai-center">
             <Button
               className="p-mx-2"
               label="Save and Preview"
+              onClick={onSave}
             />
             <Button
               className="p-mx-2 p-button-success"
-              label="Publish"
+              label="Save and Publish"
             />
           </div>
+          <Toast ref={toastRef} />
         </div>
         <div className="p-d-flex p-col-10 p-flex-column p-ac-stretch p-mt-3">
           <h3 className="p-mb-0 p-mr-2">Subtitle/Description/Instructions:</h3>
@@ -469,6 +583,7 @@ export const FormBuilder: React.FunctionComponent = () => {
         </div>
         <Divider />
         <h2>Items/Questions:</h2>
+        <h4>(Drag and drop to rearrange order of items/questions) <small className="p-error">{formError.formEntries}</small></h4>
         <DragDropContext
           onDragEnd={(param) => {
             const currentFormItems = [...formData.formItems];
@@ -511,9 +626,22 @@ export const FormBuilder: React.FunctionComponent = () => {
                               }}
                             >
                               <Panel
-                                className="p-my-3"
-                                headerTemplate={(
-                                  options) => formHeader(options, index + 1, formItem.uuid, { ...provided.dragHandleProps })
+                                className={
+                                  "p-my-3 " +
+                                  ((
+                                    formError.formItems.find(
+                                      item => item.uuid === formItem.uuid
+                                    )?.errors
+                                  ) && styles.invalidPanel)
+                                }
+                                headerTemplate={
+                                  (options) => formHeader(
+                                    options,
+                                    index + 1,
+                                    formItem.uuid,
+                                    formItem.schema,
+                                    { ...provided.dragHandleProps }
+                                  )
                                 }
                               >
                                 {renderField(formItem)}
