@@ -6,7 +6,11 @@ import { Dropdown, DropdownChangeParams } from 'primereact/dropdown';
 import { Panel } from 'primereact/panel';
 import { InputSwitch } from 'primereact/inputswitch';
 import { RadioButton } from 'primereact/radiobutton';
+import { Checkbox } from 'primereact/checkbox'
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+// import { Cloudinary } from "cloudinary";
+import { AdvancedImage, accessibility, responsive, lazyload, placeholder } from '@cloudinary/react';
+
 
 // import styles from "./FormBuilder.module.css";
 // import { PROJECT_CREATE_URL } from "../../utils/urls";
@@ -23,7 +27,8 @@ interface iFormItem {
   schema: string,
   choices: string[],
   required: boolean,
-  uuid: string
+  uuid: string,
+  acceptTypes: string[],
 }
 
 interface iFormData {
@@ -33,9 +38,10 @@ interface iFormData {
 
 interface iUpdateField {
   value?: any,
-  uuid: string, 
-  field:string, 
-  choiceIndex?:number
+  uuid: string,
+  field:string,
+  choiceIndex?:number,
+  checked?:boolean,
 }
 
 const fieldTypes = [
@@ -45,7 +51,8 @@ const fieldTypes = [
   {name: "Single Choice", value: "SINGLE_SELECT"},
   {name: "Multiple Choice", value: "MULTIPLE_SELECT"},
   {name: "Date", value: "DATE"},
-  
+  {name: "Image", value: "IMAGE"}
+
 ];
 
 
@@ -60,12 +67,11 @@ export const FormBuilder: React.FunctionComponent = () => {
     formItems: []
   });
 
-  
   const [profile, setProfile] = useState<any>();
 
   const handleOnChange = (e:React.ChangeEvent<HTMLInputElement>) => {
     return setFormData({
-      ...formData, 
+      ...formData,
       [e.target.name]:e.target.value
     });
   };
@@ -75,7 +81,7 @@ export const FormBuilder: React.FunctionComponent = () => {
       setProfile(user);
     }
   }, [user]);
-  
+
   const addField = (e : DropdownChangeParams) => {
     const {value} = e;
     let tempFormItems = [...formData.formItems];
@@ -85,7 +91,8 @@ export const FormBuilder: React.FunctionComponent = () => {
       schema: value,
       required: false,
       choices: [],
-      uuid: uuidv4()
+      uuid: uuidv4(),
+      acceptTypes: [],
     }
     tempFormItems.push(tempFormItem);
     setFormData({...formData, formItems: tempFormItems});
@@ -93,12 +100,12 @@ export const FormBuilder: React.FunctionComponent = () => {
 
   const addFieldDropdown = (
     <div>
-      <Dropdown 
-        options={fieldTypes} 
-        onChange={addField} 
-        optionLabel="name" 
+      <Dropdown
+        options={fieldTypes}
+        onChange={addField}
+        optionLabel="name"
         optionValue="value"
-        placeholder="Select a Field Type" 
+        placeholder="Select a Field Type"
       />
     </div>
   );
@@ -125,7 +132,7 @@ export const FormBuilder: React.FunctionComponent = () => {
       case "choice_update":
         if(choiceIndex !== undefined){
           currentFormItems[currentIndex].choices[choiceIndex] = value;
-        }  
+        }
       break;
       case "choice_delete":
         currentFormItems[currentIndex].choices = currentFormItems[currentIndex]
@@ -138,10 +145,12 @@ export const FormBuilder: React.FunctionComponent = () => {
         currentFormItems = formData.formItems.filter(
           formItem => formItem.uuid !== uuid
         );
+      case "file_type":
+
       break;
     }
     setFormData({
-      ...formData, 
+      ...formData,
       formItems: currentFormItems
     });
   }
@@ -155,38 +164,38 @@ export const FormBuilder: React.FunctionComponent = () => {
         return(
           <div className="p-grid">
             <div className="p-d-flex p-flex-column p-col-10">
-              <InputText 
-                autoFocus 
+              <InputText
+                autoFocus
                 onChange={(e) => updateField({
-                  value: e.target.value, 
-                  uuid: formItem.uuid, 
+                  value: e.target.value,
+                  uuid: formItem.uuid,
                   field: "text",
                 })}
                 className="p-my-2"
-                value={formItem.text} 
+                value={formItem.text}
                 placeholder="Enter question here"
               />
-            
-              <InputText 
-                autoFocus 
+
+              <InputText
+                autoFocus
                 onChange={(e) => updateField({
-                  value: e.target.value, 
-                  uuid: formItem.uuid, 
+                  value: e.target.value,
+                  uuid: formItem.uuid,
                   field: "subtext",
                 })}
                 className="p-inputtext-sm"
-                value={formItem.subtext} 
+                value={formItem.subtext}
                 placeholder="Optional subtext here"
               />
             </div>
             <div className="p-col-2 p-d-flex p-ai-center">
-              <InputSwitch 
-                checked={formItem.required} 
+              <InputSwitch
+                checked={formItem.required}
                 onChange={(e) => updateField({
-                  value: e.value, 
-                  uuid: formItem.uuid, 
+                  value: e.value,
+                  uuid: formItem.uuid,
                   field: "required",
-                })} 
+                })}
                 className="p-mr-2"
               />
               <div>Required?</div>
@@ -198,74 +207,146 @@ export const FormBuilder: React.FunctionComponent = () => {
         return(
           <div className="p-grid">
             <div className="p-d-flex p-flex-column p-col-10">
-              <InputText 
-                autoFocus 
+              <InputText
+                autoFocus
                 onChange={(e) => updateField({
-                  value: e.target.value, 
-                  uuid: formItem.uuid, 
+                  value: e.target.value,
+                  uuid: formItem.uuid,
                   field: "text",
                 })}
                 className="p-my-2"
-                value={formItem.text} 
+                value={formItem.text}
                 placeholder="Enter question here"
               />
-            
-              <InputText 
-                autoFocus 
+              <InputText
+                autoFocus
                 onChange={(e) => updateField({
-                  value: e.target.value, 
-                  uuid: formItem.uuid, 
+                  value: e.target.value,
+                  uuid: formItem.uuid,
                   field: "subtext",
                 })}
                 className="p-inputtext-sm p-my-2"
-                value={formItem.subtext} 
+                value={formItem.subtext}
                 placeholder="Optional subtext here"
               />
-              <Button 
-                  className="pi pi-plus p-button-secondary p-col-2" 
+              <Button
+                className="pi pi-plus p-button-secondary p-col-2"
+                label="Add option"
+                onClick={(e) => updateField({
+                  uuid: formItem.uuid,
+                  field: "choice_add",
+                })}
+              />
+              <ul>
+                {
+                  formItem.choices?.map( (choice, index) => (
+                    <li className="p-d-flex p-flex-row p-ai-center">
+                      <RadioButton
+                        checked={false}
+                        className="p-mr-3"
+                      />
+                      <InputText
+                        className="p-inputtext-sm p-my-2"
+                        value={choice}
+                        onChange={(e) => updateField({
+                          value: e.target.value,
+                          uuid: formItem.uuid,
+                          field: "choice_update",
+                          choiceIndex: index,
+                        })}
+                      />
+                      <Button
+                        className="p-button-danger p-button-sm pi pi-times p-button-text p-button-rounded"
+                        onClick={(e) => updateField({
+                          uuid: formItem.uuid,
+                          field: "choice_delete",
+                          choiceIndex: index
+                        })}
+                      />
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+            <div className="p-col-2 p-d-flex p-ai-center">
+              <InputSwitch
+                checked={formItem.required}
+                onChange={(e) => updateField({
+                  value: e.target.value,
+                  uuid: formItem.uuid,
+                  field: "required",
+                })}
+                className="p-mr-2"
+              />
+              <div>Required?</div>
+            </div>
+          </div>
+        );
+      case "IMAGE":
+        return(
+          <div className="p-grid">
+            <div className="p-d-flex p-flex-column p-col-10">
+              <InputText
+                autoFocus
+                onChange={(e) => updateField({
+                  value: e.target.value,
+                  uuid: formItem.uuid,
+                  field: "text",
+                })}
+                className="p-my-2"
+                value={formItem.text}
+                placeholder="Enter question here"
+              />
+              <InputText
+                autoFocus
+                onChange={(e) => updateField({
+                  value: e.target.value,
+                  uuid: formItem.uuid,
+                  field: "subtext",
+                })}
+                className="p-inputtext-sm p-my-2"
+                value={formItem.subtext}
+                placeholder="Optional subtext here"
+              />
+              <Button
+                  className="pi pi-plus p-button-secondary p-col-2"
                   label="Add option"
                   onClick={(e) => updateField({
-                    uuid: formItem.uuid, 
+                    uuid: formItem.uuid,
                     field: "choice_add",
                   })}
                 />
                 <ul>
-                  {
-                    formItem.choices?.map( (choice, index) => (
-                      <li className="p-d-flex p-flex-row p-ai-center">
-                        <RadioButton 
-                          checked={false} 
-                          className="p-mr-3"
-                        />
-                        <InputText
-                          className="p-inputtext-sm p-my-2"
-                          value={choice}
-                          onChange={(e) => updateField({
-                            value: e.target.value, 
-                            uuid: formItem.uuid, 
-                            field: "choice_update",
-                            choiceIndex: index,
-                          })}
-                        />
-                        <Button
-                          className="p-button-danger p-button-sm pi pi-times p-button-text p-button-rounded"
-                          onClick={(e) => updateField({
-                            uuid: formItem.uuid, 
-                            field: "choice_delete",
-                            choiceIndex: index
-                          })}
-                        />
-                      </li>
-                    ))
-                  }
+                  <li>
+                    <div className="col-12">
+                      <Checkbox
+                        inputId={"cb-img-"+ formItem.uuid}
+                        value="image/*"
+                        onChange={(e) => updateField({
+                          value: e.value,
+                          uuid: formItem.uuid,
+                          field: "file_type",
+                          checked: e.checked,
+                        })}
+                        checked={formItem.acceptTypes.includes("image/*")}
+                      >
+                      </Checkbox>
+                      <label
+                        htmlFor={"cb-img-"+ formItem.uuid}
+                        className="p-checkbox-label"
+                      >
+                        Images (.jpeg, .jpg, .gif, .png)
+                      </label>
+                    </div>
+                  </li>
                 </ul>
             </div>
             <div className="p-col-2 p-d-flex p-ai-center">
-              <InputSwitch 
-                checked={formItem.required} 
+              <InputSwitch
+                checked={formItem.required}
                 onChange={(e) => updateField({
-                  value: e.target.value, 
-                  uuid: formItem.uuid, 
+                  value: e.target.value,
+                  uuid: formItem.uuid,
                   field: "required",
                 })}
                 className="p-mr-2"
@@ -281,11 +362,11 @@ export const FormBuilder: React.FunctionComponent = () => {
     const className=`${options.className} p-d-flex p-jc-between`;
     const titleClassName=`${options.titleClassName}`;
     return(
-      <div 
+      <div
         className={className}
       >
         <span className={titleClassName}>
-          <i 
+          <i
             className="pi pi-bars p-mr-3"
             {...dragHandleProps}
           >
@@ -293,10 +374,10 @@ export const FormBuilder: React.FunctionComponent = () => {
           Form Entry #{itemNumber}
         </span>
         <span>
-          <Button 
+          <Button
             className="pi pi-trash p-button-danger"
             onClick={(e) => updateField({
-              uuid: uuid, 
+              uuid: uuid,
               field: "field_remove",
             })}
           />
@@ -305,14 +386,13 @@ export const FormBuilder: React.FunctionComponent = () => {
     )
   }
 
-  
   return(
     <div className={"p-pt-6 p-px-6"}>
       <div className="p-d-flex p-flex-column p-jc-start">
         <div className="p-d-flex p-flex-row p-jc-between p-grid">
             <div className="p-d-flex p-flex-row p-sm-10 p-md-8 p-lg-6">
               <h1 className="p-mb-0 p-mr-2">Form Builder:</h1>
-              <InputText 
+              <InputText
                 className="p-col"
                 value={formData.formTitle}
                 onChange={(e) => setFormData({...formData, formTitle: e.target.value})}
@@ -320,19 +400,16 @@ export const FormBuilder: React.FunctionComponent = () => {
               />
             </div>
           <div className="p-d-flex p-ai-center">
-            <Button 
+            <Button
               className="p-mx-2"
-              label="Save and Preview" 
-
+              label="Save and Preview"
             />
-            <Button 
+            <Button
               className="p-mx-2 p-button-success"
               label="Publish"
-              
             />
           </div>
         </div>
-        
         <Divider />
         <DragDropContext
           onDragEnd={(param) => {
@@ -352,7 +429,7 @@ export const FormBuilder: React.FunctionComponent = () => {
           <div className="p-sm-12 p-md-8 p-as-center">
             <Droppable droppableId={droppableId}>
               {(provided, _ ) => (
-                <div 
+                <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                 >
@@ -375,7 +452,7 @@ export const FormBuilder: React.FunctionComponent = () => {
                                   : "none"
                               }}
                             >
-                              <Panel 
+                              <Panel
                                 className="p-my-3"
                                 headerTemplate={(
                                   options) => formHeader(options, index+1, formItem.uuid, {...provided.dragHandleProps})
@@ -383,13 +460,9 @@ export const FormBuilder: React.FunctionComponent = () => {
                               >
                                 {renderField(formItem)}
                               </Panel>
-
                             </div>
-                            
                           )}
-                          
                         </Draggable>
-                        
                       )
                     )
                   }
@@ -397,10 +470,8 @@ export const FormBuilder: React.FunctionComponent = () => {
                 </div>
               )}
             </Droppable>
-            
             <Divider />
             {addFieldDropdown}
-          
           </div>
         </DragDropContext>
       </div>
