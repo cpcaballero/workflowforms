@@ -18,13 +18,11 @@ const FormSchema = new mongoose.Schema({
 
   formItems: [
     {
-      formItem: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'FormItem'
-      }
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'FormItem'
     }
   ],
-  
+
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -35,6 +33,11 @@ const FormSchema = new mongoose.Schema({
     default: Date.now,
     required: true
   },
-  
+  dateUpdated: {
+    type: Date,
+    default: Date.now,
+    required: true
+  }
+
 });
 module.exports = mongoose.model("Form", FormSchema);

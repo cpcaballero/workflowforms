@@ -37,7 +37,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/project', require('./routes/project'));
-// app.use('/api/forms', require('./routes/forms'));
+app.use('/api/form', require('./routes/form'));
 // app.use('/api/users', require('./routes/users'));
 // app.use('/api/patients', require('./routes/patients'));
 // app.use('/api/patientrecords', require('./routes/patientrecords'));

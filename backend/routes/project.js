@@ -15,7 +15,7 @@ const router = express.Router();
 
 
 
-router.post("/create", 
+router.post("/create",
   async(req, res) => {
     try{
       const {
@@ -25,7 +25,7 @@ router.post("/create",
       } = req.body;
 
       const isExistingProjectName = await Project.findOne({ projectName });
-      if(isExistingProjectName){
+      if (isExistingProjectName) {
         return res
           .status(400)
           .json(
@@ -43,16 +43,16 @@ router.post("/create",
         formId: form._id,
         createdBy: user._id
       });
-      const stageIds = stages.map(async (stage) => {
-        let newStage = await Stage.create({
-          stageName: stage,
-          projectId: project._id
-        });
+      const tempStages = stages.map(stage => {
         return {
-          stageId: newStage._id
+          stageName: stage,
+          projectId: project._id,
         }
+      })
+      const newStages = await Stage.insertMany(tempStages);
+      newStages.forEach(newStage => {
+        project.stages.push(newStage._id);
       });
-      project.stages = stageIds;
       await project.save();
       return res
         .status(201)
@@ -66,7 +66,7 @@ router.post("/create",
         .json({
           success: false,
           message: "Server error: " + err
-        })
+        });
     };
   }
 );

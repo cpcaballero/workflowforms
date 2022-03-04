@@ -37,7 +37,7 @@ export const Projects: React.FunctionComponent = () => {
   const [isCreateProjectModal, setCreateProjectModal] = useState<boolean>(false);
   const {projectName} = formData;
   const [newStage, setNewStage] = useState<string>("");
-  const [draftStages, setDraftStages] = useState<string[]>([]); 
+  const [draftStages, setDraftStages] = useState<string[]>([]);
   // const validateForm = () => {
   //   let errors = {
   //     username: "",
@@ -67,7 +67,7 @@ export const Projects: React.FunctionComponent = () => {
 
   const handleOnChange = (e:React.ChangeEvent<HTMLInputElement>) => {
     return setFormData({
-      ...formData, 
+      ...formData,
       [e.target.name]:e.target.value
     });
   };
@@ -89,20 +89,20 @@ export const Projects: React.FunctionComponent = () => {
         );
         navigate(`/project/form-builder/${project.data.project.formId}`);
     }catch(err:any){
-      
+
     }
   }
 
   const newProjectDialogFooter = (
     <div className="p-d-flex p-jc-end">
-      <Button 
+      <Button
         className="p-button-success"
         label="Create"
         disabled={(
           draftStages.length === 0 || projectName === ""
         )}
         onClick={createProject}
-        
+
       />
     </div>
   );
@@ -113,7 +113,7 @@ export const Projects: React.FunctionComponent = () => {
         (prevStage, prevIndex) => prevIndex !== index);
     });
   }
-  
+
   useEffect( () => {
     setNewStage("");
     addStageTextRef?.current?.focus();
@@ -134,21 +134,21 @@ export const Projects: React.FunctionComponent = () => {
     );
   }, [profile]);
 
-  
+
   return(
     <div className={styles.loginWrapper + " p-pt-6 p-px-6"}>
       <div className="p-d-flex p-jc-start p-ai-start">
         <h1>Projects</h1>
-        <Button 
-          label="Create" 
-          className="p-ml-5" 
+        <Button
+          label="Create"
+          className="p-ml-5"
           onClick={() => setCreateProjectModal(true)}
         />
       </div>
-      <Dialog 
+      <Dialog
         draggable={false}
         footer={newProjectDialogFooter}
-        header="Create New Project" 
+        header="Create New Project"
         visible={isCreateProjectModal}
         onHide={() => setCreateProjectModal(false)}
         style={{width: "25vw"}}
@@ -158,9 +158,9 @@ export const Projects: React.FunctionComponent = () => {
             <h3>*Project Name:</h3>
           </label>
           <div className="p-col-12 p-md-9">
-            <InputText 
+            <InputText
               className={
-                formError.projectName 
+                formError.projectName
                   && "p-invalid"
               }
               style={{
@@ -185,36 +185,36 @@ export const Projects: React.FunctionComponent = () => {
                   <span>
                     <h3>{(index+1) + ". " + stage}</h3>
                   </span>
-                  <Button 
+                  <Button
                     className="p-button-danger pi pi-trash"
                     onClick={() => removeStage(index)}
                   />
                 </div>
-                
+
               </Card>
             ))
           }
           <Card className="p-mt-4">
             <h4>Add New Stage:</h4>
             <div className="p-d-flex p-jc-center">
-              <InputText 
+              <InputText
                 ref={addStageTextRef}
-                value={newStage} 
+                value={newStage}
                 onChange={
                   (e) => setNewStage(e.target.value)
-                } 
+                }
               />
-              <Button 
-                label="Add" 
-                onClick={addStage} 
+              <Button
+                label="Add"
+                onClick={addStage}
                 disabled={newStage.trim() === ""}
               />
             </div>
-            
+
           </Card>
         </div>
-        
-        
+
+
       </Dialog>
     </div>
   );

@@ -16,6 +16,7 @@ import Projects from "./pages/Projects";
 
 import "./App.css";
 import FormBuilder from "./pages/FormBuilder";
+import FormViewer from "./pages/FormViewer";
 // import { lazyLoadComponent } from "./utils/lazyLoadComponent";
 
 // const { lazy } = React;
@@ -32,10 +33,11 @@ const App: React.FunctionComponent = () => {
           <Route path="/register" element={<Register/>} />
           <Route path="/projects" element={<Projects/>} />
           <Route path="/project/form-builder/:formId" element={<FormBuilder/>} />
+          <Route path="/form/preview/:formId" element={<FormViewer preview={true} />} />
         </Routes>
       </Router>
-      
-    </div>  
+
+    </div>
   );
 }
 

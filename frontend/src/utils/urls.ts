@@ -4,3 +4,5 @@ export const AUTH_REGISTER_URL = "/auth/create"
 export const AUTH_LOAD_USER_URL = "/auth";
 export const PROJECT_CREATE_URL = "/project/create";
 export const FORM_UPDATE_URL = "/form/update";
+export const FORM_PREVIEW_URL = "/form/preview";
+export const FORM_GET_URL = "/form";

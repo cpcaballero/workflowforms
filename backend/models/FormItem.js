@@ -14,17 +14,19 @@ const FormItemSchema = new mongoose.Schema({
     type: String, //text, long_text, single_select, multiple_select, date, yes_no
     required: [true, "Form Item Type is required"]
   },
-  choices: [
-    {
-      choiceText: {
-        type: String,
-        trim: true,
-      }
-    }
-  ],
+  choices: [],
   required: {
     type: Boolean,
     required: true
+  },
+  uuid: {
+    type: String,
+    required: true,
+  },
+  acceptTypes: {
+    type: String,
+    required: false,
+    default: ""
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -36,6 +38,5 @@ const FormItemSchema = new mongoose.Schema({
     default: Date.now,
     required: true
   },
-  
 });
-module.exports = mongoose.model("Form", FormSchema);
+module.exports = mongoose.model("FormItem", FormItemSchema);

@@ -17,6 +17,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 import styles from "./FormBuilder.module.css";
 
+import {
+  DEV_BASEPATH,
+  FORM_UPDATE_URL,
+  FORM_PREVIEW_URL,
+} from "../../utils/urls";
+
+import axios from "axios";
+
 interface iFormItem {
   text: string,
   subtext?: string,
@@ -59,7 +67,7 @@ const fieldTypes = [
   { name: "Single Choice", value: "SINGLE_SELECT" },
   { name: "Multiple Choice", value: "MULTIPLE_SELECT" },
   { name: "Date", value: "DATE" },
-  { name: "Image", value: "IMAGE" }
+  { name: "File", value: "FILE" }
 
 ];
 
@@ -98,6 +106,15 @@ export const FormBuilder: React.FunctionComponent = () => {
       setProfile(user);
     }
   }, [user]);
+
+  useEffect( () => {
+    setFormData(
+      (prevState) => ({
+        ...prevState,
+        user:profile
+      })
+    );
+  }, [profile]);
 
   const addField = (e: DropdownChangeParams) => {
     const { value } = e;
@@ -211,7 +228,6 @@ export const FormBuilder: React.FunctionComponent = () => {
                 placeholder="Enter question here"
               />
               <InputText
-                autoFocus
                 onChange={(e) => updateField({
                   value: e.target.value,
                   uuid: formItem.uuid,
@@ -337,7 +353,7 @@ export const FormBuilder: React.FunctionComponent = () => {
             </div>
           </div>
         );
-      case "IMAGE":
+      case "FILE":
         const fileTypes = [
           {
             value: "images/*",
@@ -502,7 +518,7 @@ export const FormBuilder: React.FunctionComponent = () => {
           }
         }
       }
-      if (formItem.schema === "IMAGE") {
+      if (formItem.schema === "FILE") {
         if (formItem.acceptTypes.length === 0) {
           itemError.errors.push("A filetype to accept for file upload is required.");
         }
@@ -519,15 +535,36 @@ export const FormBuilder: React.FunctionComponent = () => {
     return isEmptyFields;
   }
 
-  const onSave = () => {
+  const onSave = async() => {
     if (hasEmptyFields()) {
       toastRef?.current?.show({
         severity: "error",
         summary: "Form Save Failed",
         detail: "Please check fields and notes highlighted in red.",
         life: 5000
-      })
+      });
+      return;
     }
+    try{
+      const { data } = await axios.post(
+        `${FORM_UPDATE_URL}/${formId}`,
+        formData
+      );
+      const basePath = window.location.host;
+      const protocol = window.location.protocol;
+      const newWindowPath = `${protocol}//${basePath}${FORM_PREVIEW_URL}/${formId}`;
+      window.open(newWindowPath, "_blank")?.focus();
+
+    } catch (err:any) {
+      const { message } = err.response.data;
+      toastRef.current?.show({
+        severity: "error",
+        summary: "Form Save Failed",
+        detail: message,
+        life: 5000
+      });
+    }
+
   }
 
   return (
@@ -547,7 +584,7 @@ export const FormBuilder: React.FunctionComponent = () => {
                       formTitle: e.target.value
                     })
                   }
-                  placeholder="Enter your form title here"
+                  placeholder="Enter your form title here, visible to respondents"
                 />
                 <small className="p-error">{formError.formTitle}</small>
               </div>
