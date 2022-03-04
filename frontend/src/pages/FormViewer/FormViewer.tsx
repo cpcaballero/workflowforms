@@ -21,11 +21,9 @@ import styles from "./FormViewer.module.css";
 import { DEV_BASEPATH, FORM_GET_URL, FORM_UPDATE_URL } from "../../utils/urls";
 
 import axios from "axios";
-import TextArea from "antd/lib/input/TextArea";
 
+import {ShortText, LongText} from "../../components";
 
-
-import {ShortText} from "../../components/ShortText";
 
 interface iFormItem {
   text: string,
@@ -218,7 +216,11 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
                 index={index}
                 formItem={formItem}
               >
-
+                <LongText
+                  onChangeFn={(value:any) => saveAnswer(index, value)}
+                  formItem={formItem}
+                  value={formAnswers[index]?.value}
+                />
               </ItemWrapper>
             );
         }
@@ -249,7 +251,7 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
         </div>
         <Divider />
         <h2>Items/Questions:</h2>
-        {/* <Button label="check" onClick={() => console.log(formAnswers)} /> */}
+        <Button label="check" onClick={() => console.log(formAnswers)} />
           <div className="p-sm-12 p-md-8 p-as-center p-mb-5">
             <Divider />
             { formItems }

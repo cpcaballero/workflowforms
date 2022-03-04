@@ -22,11 +22,9 @@ router.post("/update/:formId",
         formItems,
         user
       } = req.body;
-
       const { formId } = req.params;
-
       const isExistingFormTitle = await Form.findOne({ formTitle });
-      if (isExistingFormTitle) {
+      if (isExistingFormTitle && !isExistingFormTitle._id.equals(formId)) {
         return res
           .status(400)
           .json({
@@ -35,26 +33,30 @@ router.post("/update/:formId",
           });
       }
       const form = await Form.findById(formId);
-
-      formItems.forEach((formItem) => {
-
-        formItem.acceptTypes = formItem.acceptTypes.length > 0
-          ? formItem.acceptTypes.join(",")
-          : "";
-        formItem.choices = formItem.choices.length > 0
-          ? formItem.choices
-          : undefined;
-        formItem.createdBy = user._id;
-      });
-
-
-      const newFormItems = await FormItem.insertMany(formItems);
-      console.log(newFormItems);
-
-      newFormItems.forEach(newFormItem => {
-        form.formItems.push(newFormItem._id);
-      });
-
+      const newFormItems = await Promise.all(
+        formItems.map(
+          async(formItem) => {
+            return await FormItem.findOneAndUpdate(
+              { uuid : formItem.uuid },
+              {
+                ...formItem,
+                acceptTypes: formItem.acceptTypes.length > 0
+                  ? formItem.acceptTypes.join(",")
+                  : "",
+                choices: formItem.choices.length > 0
+                  ? formItem.choices
+                  : undefined,
+                createdBy: user._id,
+              },
+              {
+                upsert: true,
+                new: true,
+              }
+            )
+          }
+        )
+      );
+      form.formItems = newFormItems.map(formItem => formItem._id);
       form.formTitle = formTitle;
       form.formSubtitle = formSubtitle;
       await form.save();
