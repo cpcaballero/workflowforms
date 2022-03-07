@@ -1,7 +1,7 @@
 import * as React from "react";
 import { InputText } from "primereact/inputtext";
 
-export const ShortText = (props) => {
+export const ShortText = (props:any) => {
   const {
     onChangeFn,
     value,
@@ -18,7 +18,7 @@ export const ShortText = (props) => {
         placeholder={`Your answer ${formItem.required ? '(required)' : ''}`}
       />
       {
-        formItem.errorMsg?.map(msg => (
+        formItem.errorMsg?.map((msg:string) => (
           <small className="p-error block">{msg}</small>
         ))
       }

@@ -364,11 +364,11 @@ export const FormBuilder: React.FunctionComponent = () => {
             label: "Word Documents (.doc, or .docx file extensions)"
           },
           {
-            value: ".pdf, ",
+            value: ".pdf",
             label: "PDF File (.pdf file extensions)"
           },
           {
-            value: ".xls, .xlsx",
+            value: ".xls,.xlsx",
             label: "Excel file (.xls, .xlsx file extensions)"
           },
         ];
@@ -553,7 +553,16 @@ export const FormBuilder: React.FunctionComponent = () => {
       const basePath = window.location.host;
       const protocol = window.location.protocol;
       const newWindowPath = `${protocol}//${basePath}${FORM_PREVIEW_URL}/${formId}`;
-      window.open(newWindowPath, "_blank")?.focus();
+      toastRef?.current?.show({
+        severity: "success",
+        summary: "Form Saved",
+        detail: "A new tab will be opened to preview your form.",
+        life: 5000
+      });
+      setTimeout(function () {
+        window.open(newWindowPath, "_blank")?.focus();
+      }, 3500);
+
 
     } catch (err:any) {
       const { message } = err.response.data;

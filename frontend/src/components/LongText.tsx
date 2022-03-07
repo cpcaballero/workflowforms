@@ -1,6 +1,6 @@
 import { InputTextarea } from "primereact/inputtextarea";
 
-export const LongText = (props) => {
+export const LongText = (props:any) => {
   const {
     onChangeFn,
     value,
@@ -17,7 +17,7 @@ export const LongText = (props) => {
         placeholder={`Your answer ${formItem.required ? '(required)' : ''}`}
       />
       {
-        formItem.errorMsg?.map(msg => (
+        formItem.errorMsg?.map((msg:string) => (
           <small className="p-error block">{msg}</small>
         ))
       }

@@ -22,7 +22,15 @@ import { DEV_BASEPATH, FORM_GET_URL, FORM_UPDATE_URL } from "../../utils/urls";
 
 import axios from "axios";
 
-import {ShortText, LongText} from "../../components";
+import {
+  ShortText,
+  LongText,
+  BinarySelect,
+  SingleSelect,
+  MultipleSelect,
+  FileUploader
+} from "../../components";
+import { DateInput } from "../../components/DateInput";
 
 
 interface iFormItem {
@@ -68,7 +76,8 @@ const fieldTypes = [
 
 
 
-export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
+export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) => {
+  const { preview } = props;
   const user = useCheckLogin();
   const { formId } = useParams();
   const navigate = useNavigate();
@@ -90,7 +99,6 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
     dateCreated: undefined,
     dateUpdated: undefined
   });
-
   const [ formAnswers, setFormAnswers ] = useState<formAnswer[]>([]);
 
   // const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,8 +142,11 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
 
   const saveAnswer = useCallback((index:number, value:any) => {
     console.log("saveanswer called");
+
     setFormAnswers((prevState) => {
-      prevState[index].value = value;
+      if (prevState[index]) {
+        prevState[index].value = value;
+      }
       return prevState;
     });
   }, []);
@@ -146,6 +157,8 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
     itemNumber: number,
     uuid: string,
     text: string,
+
+    required: boolean,
     subtext?: string,
   ) => {
     const className = `${options.className} p-d-flex p-jc-between`;
@@ -156,8 +169,18 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
           <div className="p-d-flex p-flex-row p-ai-center">
             <span className="p-mr-3">#{itemNumber}:</span>
             <span className="p-d-flex p-flex-column">
-              <span>{text}</span>
-              { subtext && <small className="p-mt-3">{subtext}</small> }
+              <span>
+                <span className={styles.requiredAsterisk}>
+                  { required ? "*" : "" }
+                </span>
+                {text}
+              </span>
+              {
+                subtext &&
+                <small className="p-mt-3">
+                  {subtext}
+                </small>
+              }
             </span>
           </div>
 
@@ -182,6 +205,7 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
             index + 1,
             formItem.uuid,
             formItem.text,
+            formItem.required,
             formItem.subtext,
           )
         }
@@ -194,6 +218,7 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
   const formItems = useMemo(() => {
     console.log("renderfield rerender");
     const { formItems } = formStructure;
+    console.log(formItems);
     return formItems.map(
       (formItem, index) => {
         switch (formItem.schema) {
@@ -223,6 +248,71 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
                 />
               </ItemWrapper>
             );
+          case "YES_NO":
+            return (
+              <ItemWrapper
+                index={index}
+                formItem={formItem}
+              >
+                <BinarySelect
+                  onChangeFn={(value:any) => saveAnswer(index, value)}
+                  formItem={formItem}
+                  value={formAnswers[index]?.value}
+                />
+              </ItemWrapper>
+            );
+          case "SINGLE_SELECT":
+            return (
+              <ItemWrapper
+                index={index}
+                formItem={formItem}
+              >
+                <SingleSelect
+                  onChangeFn={(value:any) => saveAnswer(index, value)}
+                  formItem={formItem}
+                  value={formAnswers[index]?.value}
+                />
+              </ItemWrapper>
+            );
+          case "MULTIPLE_SELECT":
+            return (
+              <ItemWrapper
+                index={index}
+                formItem={formItem}
+              >
+                <MultipleSelect
+                  onChangeFn={(value:any) => saveAnswer(index, value)}
+                  formItem={formItem}
+                  value={formAnswers[index]?.value}
+                />
+              </ItemWrapper>
+            );
+          case "DATE":
+            return (
+              <ItemWrapper
+                index={index}
+                formItem={formItem}
+              >
+                <DateInput
+                  onChangeFn={(value:any) => saveAnswer(index, value)}
+                  formItem={formItem}
+                  value={formAnswers[index]?.value}
+                />
+              </ItemWrapper>
+            )
+          case "FILE":
+              return (
+                <ItemWrapper
+                  index={index}
+                  formItem={formItem}
+                >
+                  <FileUploader
+                    onChangeFn={(value:any) => saveAnswer(index, value)}
+                    formItem={formItem}
+                    value={formAnswers[index]?.value}
+                  />
+                </ItemWrapper>
+              )
         }
       }
     )
@@ -243,6 +333,16 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = () => {
             <div className="p-d-flex p-flex-row p-ai-center">
               <h1 className="p-mb-0 p-mr-2">{formStructure.formTitle}</h1>
             </div>
+          </div>
+          <div className="p-d-flex p-ai-center">
+            {
+              preview && (
+              <Button
+                className="p-mx-2"
+                label="Close this tab"
+                onClick={() => window.close()}
+              />)
+            }
           </div>
           <Toast ref={toastRef} />
         </div>
