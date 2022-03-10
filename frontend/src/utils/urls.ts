@@ -6,3 +6,5 @@ export const PROJECT_CREATE_URL = "/project/create";
 export const FORM_UPDATE_URL = "/form/update";
 export const FORM_PREVIEW_URL = "/form/preview";
 export const FORM_GET_URL = "/form";
+export const FORM_SAVE_ANSWER_URL = "/form/answers/save"
+export const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/lundytest/raw/upload"

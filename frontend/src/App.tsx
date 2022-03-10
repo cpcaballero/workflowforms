@@ -34,6 +34,7 @@ const App: React.FunctionComponent = () => {
           <Route path="/projects" element={<Projects/>} />
           <Route path="/project/form-builder/:formId" element={<FormBuilder/>} />
           <Route path="/form/preview/:formId" element={<FormViewer preview={true} />} />
+          <Route path="/form/:formId" element={<FormViewer preview={false} />} />
         </Routes>
       </Router>
 

@@ -37,8 +37,11 @@ export const FileUploader = (props:any) => {
   const [ fileCount, setFileCount ] = useState(0);
 
 
+
   const onTemplateRemove = (file:any, callback:any) => {
+    console.log("onTemplateRemove called");
     setFileCount((prevState) => prevState - 1);
+    onChangeFn(undefined);
     callback();
   }
 
@@ -53,7 +56,7 @@ export const FileUploader = (props:any) => {
             style={{width: '40%'}}
           >
             <img
-              alt={file?.name}
+              alt={""}
               role="presentation"
               src={file.objectURL}
               width={100}
@@ -89,6 +92,7 @@ export const FileUploader = (props:any) => {
       cancelButton
     } = options;
     console.log(options);
+    console.log(uploadButton);
     return (
         <div
           className={className}
@@ -102,7 +106,7 @@ export const FileUploader = (props:any) => {
         </div>
     );
   };
-  const onSelectFile = (event:FileUploadSelectParams) => {
+  const onSelectFile = (event:any) => {
     const { originalEvent, files } = event;
     console.log(files);
     console.log(files.length);
@@ -122,9 +126,16 @@ export const FileUploader = (props:any) => {
     )
   );
 
+  const uploadFile = (e:any) => {
+    const { files } = e;
+    console.log("UPLOADFILE CALLED")
+    console.log(files);
+    onChangeFn(files[0]);
+  }
   return (
     <div className="p-d-flex p-flex-column p-col-10">
       <FileUpload
+        auto={true}
         name="demo"
         url="./upload"
         mode="advanced"
@@ -134,17 +145,23 @@ export const FileUploader = (props:any) => {
         accept={formItem.acceptTypes.split(",")}
         maxFileSize={10000000}
         onValidationFail={onValidationFail}
+        customUpload={true}
+        uploadHandler={uploadFile}
       />
 
         <h5>Filetypes accepted:</h5>
         <ul>
           {
-            Array.from(new Set(allowedExtensions)).map((acceptType:any) => (
-              <li className="p-d-flex p-flex-row p-ai-center">
-                <label
-                  htmlFor={"cb-img-" + formItem.uuid}
-                  className="p-checkbox-label"
-                >
+            Array.from(new Set(allowedExtensions)).map(
+              (
+                acceptType:any,
+                index:number
+              ) => (
+              <li
+                key={"fuploader-" + index + "-" + formItem.uuid}
+                className="p-d-flex p-flex-row p-ai-center"
+              >
+                <label className="p-checkbox-label">
                   {acceptType}
                 </label>
               </li>

@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.post("/update/:formId",
   async(req, res) => {
-    try{
+    try {
       const {
         formTitle,
         formSubtitle,
@@ -66,7 +66,7 @@ router.post("/update/:formId",
           success: true,
           form
         });
-    } catch(err){
+    } catch(err) {
       return res
         .status(500)
         .json({
@@ -79,15 +79,25 @@ router.post("/update/:formId",
 
 router.get("/:formId",
   async(req, res) => {
-    try{
+    try {
       const formDetails = await Form.findById(req.params.formId).populate("formItems");
       return res.status(200).json({form:formDetails});
-    } catch(err){
+    } catch(err) {
       console.log(err);
     }
   }
 );
 
+router.post("/answers/save/:formId",
+  async(req, res) => {
+    try {
+      const { answers } = req.body;
+      const formId = req.params.formId;
+    } catch(err) {
+
+    }
+  }
+);
 
 
 module.exports = router;

@@ -22,7 +22,11 @@ export const MultipleSelect = (props:any) => {
   }
 
   useEffect( () => {
-    onChangeFn(cbValue);
+    if (cbValue.length === 0) {
+      onChangeFn(undefined);
+    } else {
+      onChangeFn(cbValue);
+    }
   }, [cbValue, onChangeFn]);
 
   return (
@@ -30,7 +34,10 @@ export const MultipleSelect = (props:any) => {
       <ul>
         {
           formItem.choices.map((choice:string) => (
-            <li className="p-d-flex p-flex-row p-ai-center p-my-3">
+            <li
+              className="p-d-flex p-flex-row p-ai-center p-my-3"
+              key={`cb-${choice.split(" ").join("-")}-${formItem.uuid}`}
+            >
               <Checkbox
                 className="p-mr-3"
                 value={choice}

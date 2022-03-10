@@ -68,6 +68,7 @@ export const DateInput = (props:any) => {
         yearNavigatorTemplate={yearNavigatorTemplate}
         onChange={(e) => updateValues(e.target.value)}
         placeholder={`Your answer ${formItem.required ? '(required)' : ''}`}
+        onClearButtonClick={() => setDateValue(undefined)}
       />
       {
         formItem.errorMsg?.map((msg:string) => (

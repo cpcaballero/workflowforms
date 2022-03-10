@@ -20,10 +20,14 @@ export const SingleSelect = (props:any) => {
       <ul>
         {
           formItem.choices.map((choice:string) => (
-            <li className="p-d-flex p-flex-row p-ai-center p-my-3">
+            <li
+              className="p-d-flex p-flex-row p-ai-center p-my-3"
+              key={`rb-${choice.split(" ").join("-")}-${formItem.uuid}`}
+            >
               <RadioButton
                 className="p-mr-3"
                 value={choice}
+                key={`rb-${choice.split(" ").join("-")}-${formItem.uuid}`}
                 inputId={`rb-${choice.split(" ").join("-")}-${formItem.uuid}`}
                 name={`rb-${formItem.uuid}`}
                 onChange={(e) => setRbValue(e.value)}

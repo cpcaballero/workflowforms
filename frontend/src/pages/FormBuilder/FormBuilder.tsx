@@ -356,7 +356,7 @@ export const FormBuilder: React.FunctionComponent = () => {
       case "FILE":
         const fileTypes = [
           {
-            value: "images/*",
+            value: ".jpeg,.jpg,.png,.gif",
             label: "Images (.jpeg, .jpg, .gif, or .png file extensions)",
           },
           {
