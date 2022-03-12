@@ -4,7 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import axios from "axios";
-import { DEV_BASEPATH } from "./utils/urls";
+import { DEV_BASEPATH } from "./utils/constants";
 
 axios.defaults.baseURL = DEV_BASEPATH;
 

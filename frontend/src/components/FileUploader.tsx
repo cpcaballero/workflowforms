@@ -118,7 +118,7 @@ export const FileUploader = (props:any) => {
     setFileCount((prevState) => prevState - 1);
   }
 
-  const allowedExtensions = formItem.acceptTypes.split(",").map(
+  const allowedExtensions = formItem.acceptTypes.map(
     (acceptType:any) => (
       fileTypes.find(
         type => type.value.includes(acceptType)
@@ -142,7 +142,7 @@ export const FileUploader = (props:any) => {
         itemTemplate={itemTemplate}
         headerTemplate={headerTemplate}
         onSelect={(onSelectFile)}
-        accept={formItem.acceptTypes.split(",")}
+        accept={formItem.acceptTypes.join(",")}
         maxFileSize={10000000}
         onValidationFail={onValidationFail}
         customUpload={true}

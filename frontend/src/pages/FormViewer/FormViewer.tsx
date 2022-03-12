@@ -1,24 +1,20 @@
 import * as React from "react";
 import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { InputTextarea } from "primereact/inputtextarea";
 import { Divider } from 'primereact/divider';
-import { Dropdown, DropdownChangeParams } from 'primereact/dropdown';
 import { Panel } from 'primereact/panel';
-import { InputSwitch } from 'primereact/inputswitch';
-import { RadioButton } from 'primereact/radiobutton';
-import { Checkbox } from 'primereact/checkbox'
 import { Toast } from 'primereact/toast';
-import { Calendar } from 'primereact/calendar';
-import { FileUpload, FileUploadProps, FileUploadSelectParams, ItemTemplateOptions } from 'primereact/fileupload';
-import { Tag } from 'primereact/tag';
 import { useNavigate, useParams } from "react-router-dom";
 import useCheckLogin from "../../utils/useCheckLogin";
-import { v4 as uuidv4 } from 'uuid';
 
 import styles from "./FormViewer.module.css";
 
-import { CLOUDINARY_URL, DEV_BASEPATH, FORM_GET_URL, FORM_SAVE_ANSWER_URL, FORM_UPDATE_URL } from "../../utils/urls";
+import {
+  CLOUDINARY_URL,
+  DEV_BASEPATH,
+  FORM_GET_URL,
+  FORM_SAVE_ANSWER_URL,
+  FORM_UPDATE_URL
+} from "../../utils/constants";
 
 import axios from "axios";
 
@@ -31,10 +27,6 @@ import {
   FileUploader,
   DateInput,
 } from "../../components";
-import {Cloudinary} from "@cloudinary/url-gen";
-
-
-
 interface iFormItem {
   text: string,
   subtext?: string,
@@ -45,7 +37,6 @@ interface iFormItem {
   acceptTypes: string[],
   errorMsg : string[]
 }
-
 interface iFormStructure {
   formTitle: string,
   formSubtitle: string,
@@ -55,28 +46,10 @@ interface iFormStructure {
   dateUpdated: Date | undefined,
   createdBy: string,
 }
-
-interface iItemError {
-  uuid: string,
-  errors: string[],
-}
-
 interface iFormAnswer {
   uuid: string,
   value?: any
 }
-
-const fieldTypes = [
-  { name: "Short text", value: "TEXT" },
-  { name: "Long text", value: "LONG_TEXT" },
-  { name: "Yes/No Question", value: "YES_NO" },
-  { name: "Single Choice", value: "SINGLE_SELECT" },
-  { name: "Multiple Choice", value: "MULTIPLE_SELECT" },
-  { name: "Date", value: "DATE" },
-  { name: "File", value: "FILE" }
-];
-
-
 
 export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) => {
   const { preview } = props;
@@ -96,11 +69,7 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
     dateUpdated: undefined
   });
   const [ formAnswers, setFormAnswers ] = useState<iFormAnswer[]>([]);
-  const cld = new Cloudinary({
-    cloud: {
-      cloudName: 'demo'
-    }
-  });
+
 
   useEffect(() => {
     if (user !== undefined) {
@@ -448,7 +417,7 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
       );
 
     } catch (err:any) {
-
+      console.log(err);
     }
   }
 

@@ -1,6 +1,6 @@
 import * as React from "react";
 import axios from "axios";
-import { AUTH_LOAD_USER_URL } from "./urls";
+import { AUTH_LOAD_USER_URL } from "./constants";
 import setAuthToken from "./setAuthToken";
 import { useNavigate } from "react-router-dom";
 

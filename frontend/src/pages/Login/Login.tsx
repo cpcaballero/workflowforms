@@ -8,7 +8,7 @@ import styles from "./Login.module.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import setAuthToken from "../../utils/setAuthToken";
-import { AUTH_LOGIN_URL, AUTH_LOAD_USER_URL } from "../../utils/urls";
+import { AUTH_LOGIN_URL, AUTH_LOAD_USER_URL } from "../../utils/constants";
 
 export const Login: React.FunctionComponent = () => {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ export const Login: React.FunctionComponent = () => {
     if(password === ""){
       errors.password = "Password is required";
       isValidFields = false;
-      
+
     }
     setFormError(errors);
     return isValidFields;
@@ -57,7 +57,7 @@ export const Login: React.FunctionComponent = () => {
     } catch(err:any){
       const { message } = err.response.data;
       setFormError({
-        ...formError, 
+        ...formError,
         form: message
       });
     };
@@ -65,7 +65,7 @@ export const Login: React.FunctionComponent = () => {
 
   const handleOnChange = (e:React.ChangeEvent<HTMLInputElement>) => {
     return setFormData({
-      ...formData, 
+      ...formData,
       [e.target.name]:e.target.value
     });
   };
@@ -91,9 +91,9 @@ export const Login: React.FunctionComponent = () => {
 
   return(
     <div className={styles.loginWrapper}>
-      <Card 
+      <Card
         className={styles.loginBox}
-        title={"Login"} 
+        title={"Login"}
         >
         <div className="p-fluid">
           <div className="p-field p-grid" >
@@ -101,9 +101,9 @@ export const Login: React.FunctionComponent = () => {
                 *Username
               </label>
               <div className="p-col-12 p-md-9">
-                <InputText 
+                <InputText
                   className={
-                    formError.username 
+                    formError.username
                       && "p-invalid"
                   }
                   name="username"
@@ -121,9 +121,9 @@ export const Login: React.FunctionComponent = () => {
                 *Password
               </label>
               <div className="p-col-12 p-md-9">
-                <Password 
+                <Password
                   className={
-                    formError.password 
+                    formError.password
                       && "p-invalid"
                   }
                   feedback={false}
@@ -139,10 +139,10 @@ export const Login: React.FunctionComponent = () => {
           </div>
         </div>
         <div className="p-d-flex p-jc-center">
-          <Button 
-            className="p-px-6" 
-            label="Submit" 
-            onClick={handleSubmit} 
+          <Button
+            className="p-px-6"
+            label="Submit"
+            onClick={handleSubmit}
           />
         </div>
       </Card>

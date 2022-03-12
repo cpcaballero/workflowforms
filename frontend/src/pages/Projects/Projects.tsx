@@ -5,7 +5,7 @@ import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Dialog } from "primereact/dialog";
 import styles from "./Projects.module.css";
-import { PROJECT_CREATE_URL } from "../../utils/urls";
+import { PROJECT_CREATE_URL } from "../../utils/constants";
 import { useNavigate } from "react-router-dom";
 
 import useCheckLogin from "../../utils/useCheckLogin";
@@ -151,11 +151,17 @@ export const Projects: React.FunctionComponent = () => {
         header="Create New Project"
         visible={isCreateProjectModal}
         onHide={() => setCreateProjectModal(false)}
-        style={{width: "25vw"}}
+        style={{width: "50vw"}}
       >
-        <div className="p-field p-grid" >
-          <label className="p-col-12 p-md-3">
-            <h3>*Project Name:</h3>
+        <div className="p-field p-grid">
+          <label
+            className="p-d-flex p-flex-column p-ai-start p-jc-center"
+            style={{marginBottom: "0px"}}
+          >
+            <h3 style={{marginBottom: "0px"}}>
+              <span className={styles.requiredAsterisk}>*</span>
+              Project Name:
+            </h3>
           </label>
           <div className="p-col-12 p-md-9">
             <InputText
@@ -176,14 +182,26 @@ export const Projects: React.FunctionComponent = () => {
             </small>
           </div>
         </div>
-        <h3>*Stages:</h3>
+        <h3>
+          <span className={styles.requiredAsterisk}>*</span>
+          Stages:
+        </h3>
         <div className="p-d-flex p-ai-center p-flex-column">
+          <Card className={"p-my-2 p-py-0 p-col-11 " + styles.defaultStages }>
+            <div className="p-d-flex p-flex-row p-jc-between p-ai-center">
+              <span>
+                <h3 className={styles.defaultStages}>Data Encoded</h3>
+                <small>This first stage is default for newly entered form entries by respondents.</small>
+              </span>
+              <i className={"pi pi-list " + styles.defaultStageIcon}></i>
+            </div>
+          </Card>
           {
             draftStages.map((stage, index) => (
               <Card className="p-my-2 p-py-0 p-col-11">
                 <div className="p-d-flex p-flex-row p-jc-between">
                   <span>
-                    <h3>{(index+1) + ". " + stage}</h3>
+                    <h3>Stage {(index+1) + ". " + stage}</h3>
                   </span>
                   <Button
                     className="p-button-danger pi pi-trash"
@@ -194,10 +212,11 @@ export const Projects: React.FunctionComponent = () => {
               </Card>
             ))
           }
-          <Card className="p-mt-4">
+          <Card className="p-my-2 p-py-0 p-col-11">
             <h4>Add New Stage:</h4>
-            <div className="p-d-flex p-jc-center">
+            <div className="p-d-flex p-jc-start">
               <InputText
+                style={{flex: "1"}}
                 ref={addStageTextRef}
                 value={newStage}
                 onChange={
@@ -211,6 +230,15 @@ export const Projects: React.FunctionComponent = () => {
               />
             </div>
 
+          </Card>
+          <Card className={"p-my-2 p-py-0 p-col-11 " + styles.defaultStages}>
+            <div className="p-d-flex p-flex-row p-jc-between p-ai-center">
+              <span>
+                <h3 className={styles.defaultStages}>Completed</h3>
+                <small>This last stage is default for completely processed form entries.</small>
+              </span>
+              <i className={"pi pi-check " + styles.defaultStageIcon}></i>
+            </div>
           </Card>
         </div>
 

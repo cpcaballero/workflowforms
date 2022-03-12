@@ -8,8 +8,7 @@ const StageSchema = new mongoose.Schema({
   },
   projectId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Project',
-    required: true
+    ref: 'Project'
   },
 });
 module.exports = mongoose.model("Stage", StageSchema);

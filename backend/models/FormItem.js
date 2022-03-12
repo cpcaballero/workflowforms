@@ -14,7 +14,10 @@ const FormItemSchema = new mongoose.Schema({
     type: String, //text, long_text, single_select, multiple_select, date, yes_no
     required: [true, "Form Item Type is required"]
   },
-  choices: [],
+  choices: [{
+    type: String,
+    required: true,
+  }],
   required: {
     type: Boolean,
     required: true
@@ -23,11 +26,10 @@ const FormItemSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  acceptTypes: {
+  acceptTypes: [{
     type: String,
     required: false,
-    default: ""
-  },
+  }],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

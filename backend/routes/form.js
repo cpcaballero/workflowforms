@@ -40,10 +40,10 @@ router.post("/update/:formId",
               { uuid : formItem.uuid },
               {
                 ...formItem,
-                acceptTypes: formItem.acceptTypes.length > 0
-                  ? formItem.acceptTypes.join(",")
-                  : "",
-                choices: formItem.choices.length > 0
+                acceptTypes: formItem.acceptTypes?.length > 0
+                  ? formItem.acceptTypes
+                  : undefined,
+                choices: formItem.choices?.length > 0
                   ? formItem.choices
                   : undefined,
                 createdBy: user._id,
@@ -80,8 +80,12 @@ router.post("/update/:formId",
 router.get("/:formId",
   async(req, res) => {
     try {
-      const formDetails = await Form.findById(req.params.formId).populate("formItems");
-      return res.status(200).json({form:formDetails});
+      const formDetails = await Form
+        .findById(req.params.formId)
+        .populate("formItems");
+      return res
+        .status(200)
+        .json( {form:formDetails} );
     } catch(err) {
       console.log(err);
     }

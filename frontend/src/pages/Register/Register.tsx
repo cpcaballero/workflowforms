@@ -8,7 +8,7 @@ import { Password } from "primereact/password";
 import { Calendar } from "primereact/calendar";
 import { Dropdown } from "primereact/dropdown";
 import styles from "./Register.module.css";
-import { AUTH_REGISTER_URL } from "../../utils/urls";
+import { AUTH_REGISTER_URL } from "../../utils/constants";
 import axios from "axios";
 
 const GENDER_CHOICES = [
@@ -47,7 +47,7 @@ export const Register: React.FunctionComponent = () => {
     confirmPassword: ""
   });
   const {
-    emailAddress, 
+    emailAddress,
     password,
     firstName,
     middleName,
@@ -72,24 +72,24 @@ export const Register: React.FunctionComponent = () => {
     };
 
     let isValidFields = true;
-    
+
     Object.keys(errors).forEach((key:any) => {
       if(!formData[key]){
-        
+
         isValidFields = false;
         errors[key] = "This field is required";
       }
     });
 
-    if(password && 
-      confirmPassword && 
+    if(password &&
+      confirmPassword &&
       password !== confirmPassword
     ){
       isValidFields = false;
       errors.password = "Passwords do not match";
       errors.confirmPassword = "Passwords do not match";
     }
-    
+
     setFormError(errors);
     // console.log(isValidFields);
     return isValidFields;
@@ -129,12 +129,12 @@ export const Register: React.FunctionComponent = () => {
       setFormError(errors);
       return err;
     };
-    
+
   };
 
   const handleOnChange = (e:React.ChangeEvent<HTMLInputElement>) => {
     return setFormData({
-      ...formData, 
+      ...formData,
       [e.target.name]:e.target.value
     });
   };
@@ -172,9 +172,9 @@ export const Register: React.FunctionComponent = () => {
 
   return(
     <div className={styles.registerWrapper}>
-      <Card 
+      <Card
         className={styles.registerBox}
-        title={"Register"} 
+        title={"Register"}
       >
         <div className="p-fluid">
           <div className="p-field p-grid">
@@ -182,9 +182,9 @@ export const Register: React.FunctionComponent = () => {
               *First Name
             </label>
             <div className="p-col-12 p-md-9">
-              <InputText 
+              <InputText
                 className={
-                  formError.firstName 
+                  formError.firstName
                     && "p-invalid"
                 }
                 name="firstName"
@@ -202,7 +202,7 @@ export const Register: React.FunctionComponent = () => {
               Middle Name
             </label>
             <div className="p-col-12 p-md-9">
-              <InputText 
+              <InputText
                 name="middleName"
                 type="text"
                 onChange={handleOnChange}
@@ -215,9 +215,9 @@ export const Register: React.FunctionComponent = () => {
               *Last Name
             </label>
             <div className="p-col-12 p-md-9">
-              <InputText 
+              <InputText
                 className={
-                  formError.lastName 
+                  formError.lastName
                     && "p-invalid"
                 }
                 name="lastName"
@@ -235,7 +235,7 @@ export const Register: React.FunctionComponent = () => {
               Name Suffix
             </label>
             <div className="p-col-12 p-md-3">
-              <InputText 
+              <InputText
                 name="nameSuffix"
                 type="text"
                 onChange={handleOnChange}
@@ -248,18 +248,18 @@ export const Register: React.FunctionComponent = () => {
               Gender
             </label>
             <div className="p-col-12 p-md-6">
-              <Dropdown 
+              <Dropdown
                 className={
-                  "p-col-12 p-md-9 " + 
-                  (formError.gender 
+                  "p-col-12 p-md-9 " +
+                  (formError.gender
                     && "p-invalid")
                 }
                 name="gender"
                 onChange={(e) => setFormData({
-                  ...formData, 
+                  ...formData,
                   gender : e.value
                 })}
-                options={GENDER_CHOICES} 
+                options={GENDER_CHOICES}
                 optionLabel="name"
                 optionValue="value"
                 value={gender}
@@ -274,9 +274,9 @@ export const Register: React.FunctionComponent = () => {
               Birth Date
             </label>
             <div className="p-col-12 p-md-6">
-              <Calendar 
+              <Calendar
                 className={
-                  formError.birthDate 
+                  formError.birthDate
                     && "p-invalid"
                 }
                 monthNavigatorTemplate={monthNavigatorTemplate}
@@ -308,9 +308,9 @@ export const Register: React.FunctionComponent = () => {
                 <span className="p-inputgroup-addon">
                   +63
                 </span>
-                <InputMask 
+                <InputMask
                   className={
-                    formError.mobileNumber 
+                    formError.mobileNumber
                       && "p-invalid"
                   }
                   mask="999-999-9999"
@@ -334,9 +334,9 @@ export const Register: React.FunctionComponent = () => {
               *Email Address
             </label>
             <div className="p-col-12 p-md-9">
-              <InputText 
+              <InputText
                 className={
-                  formError.emailAddress 
+                  formError.emailAddress
                     && "p-invalid"
                 }
                 name="emailAddress"
@@ -354,9 +354,9 @@ export const Register: React.FunctionComponent = () => {
               *Password
             </label>
             <div className="p-col-12 p-md-9">
-              <Password 
+              <Password
                 className={
-                  formError.password 
+                  formError.password
                     && "p-invalid"
                 }
                 feedback={true}
@@ -375,9 +375,9 @@ export const Register: React.FunctionComponent = () => {
               *Confirm Password
             </label>
             <div className="p-col-12 p-md-9">
-              <Password 
+              <Password
                 className={
-                  formError.password 
+                  formError.password
                     && "p-invalid"
                 }
                 feedback={true}
@@ -393,10 +393,10 @@ export const Register: React.FunctionComponent = () => {
           </div>
         </div>
         <div className="p-d-flex p-jc-center">
-          <Button 
-            className="p-px-6" 
-            label="Submit" 
-            onClick={handleSubmit} 
+          <Button
+            className="p-px-6"
+            label="Submit"
+            onClick={handleSubmit}
           />
         </div>
       </Card>

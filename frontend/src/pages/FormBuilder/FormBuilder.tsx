@@ -21,7 +21,9 @@ import {
   DEV_BASEPATH,
   FORM_UPDATE_URL,
   FORM_PREVIEW_URL,
-} from "../../utils/urls";
+  FORM_GET_URL,
+  MINUTE_MS,
+} from "../../utils/constants";
 
 import axios from "axios";
 
@@ -82,6 +84,7 @@ export const FormBuilder: React.FunctionComponent = () => {
     formSubtitle: "",
     formItems: []
   });
+  const [isFirstLoad, setFirstLoad] = useState(true);
   const [profile, setProfile] = useState<any>();
   const addDropdownRef = useRef<null | HTMLDivElement>(null);
   const toastRef = useRef<null | Toast>(null);
@@ -91,30 +94,11 @@ export const FormBuilder: React.FunctionComponent = () => {
     formEntries: "",
     formItems: []
   });
-  const { formTitle, formSubtitle, formItems } = formData;
-
-
-  const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    return setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  useEffect(() => {
-    if (user !== undefined) {
-      setProfile(user);
-    }
-  }, [user]);
-
-  useEffect( () => {
-    setFormData(
-      (prevState) => ({
-        ...prevState,
-        user:profile
-      })
-    );
-  }, [profile]);
+  const {
+    formTitle,
+    formSubtitle,
+    formItems,
+  } = formData;
 
   const addField = (e: DropdownChangeParams) => {
     const { value } = e;
@@ -199,11 +183,10 @@ export const FormBuilder: React.FunctionComponent = () => {
       ...formData,
       formItems: currentFormItems
     });
-  }
+  };
 
-  const renderField = (formItem: iFormItem) => {
+  const renderField = (formItem:iFormItem) => {
     const errorMsg = formError.formItems.find(item => item.uuid === formItem.uuid)?.errors;
-    const invalidClass = errorMsg && "p-invalid";
     console.log(errorMsg);
     switch (formItem.schema) {
       case "TEXT":
@@ -277,7 +260,6 @@ export const FormBuilder: React.FunctionComponent = () => {
                 placeholder="Enter question here"
               />
               <InputText
-                autoFocus
                 onChange={(e) => updateField({
                   value: e.target.value,
                   uuid: formItem.uuid,
@@ -390,7 +372,6 @@ export const FormBuilder: React.FunctionComponent = () => {
                 placeholder="Enter question here"
               />
               <InputText
-                autoFocus
                 onChange={(e) => updateField({
                   value: e.target.value,
                   uuid: formItem.uuid,
@@ -448,8 +429,10 @@ export const FormBuilder: React.FunctionComponent = () => {
             </div>
           </div>
         );
+      default:
+        return (<>{" "}</>);
     }
-  }
+  };
 
   const formHeader = (
     options: any,
@@ -535,7 +518,8 @@ export const FormBuilder: React.FunctionComponent = () => {
     return isEmptyFields;
   }
 
-  const onSave = async() => {
+
+  const onSavePreview = async() => {
     if (hasEmptyFields()) {
       toastRef?.current?.show({
         severity: "error",
@@ -546,7 +530,7 @@ export const FormBuilder: React.FunctionComponent = () => {
       return;
     }
     try{
-      const { data } = await axios.post(
+      await axios.post(
         `${FORM_UPDATE_URL}/${formId}`,
         formData
       );
@@ -573,8 +557,60 @@ export const FormBuilder: React.FunctionComponent = () => {
         life: 5000
       });
     }
-
   }
+
+  useEffect(() => {
+    if (user !== undefined) {
+      setProfile(user);
+    }
+  }, [user]);
+
+  useEffect( () => {
+    setFormData(
+      (prevState) => ({
+        ...prevState,
+        user:profile
+      })
+    );
+  }, [profile]);
+
+  useEffect(() => {
+    const getForm = async () => {
+      try{
+        const { data } = await axios.get(`${DEV_BASEPATH}${FORM_GET_URL}/${formId}`);
+        setFormData({
+          formTitle: data.form.formTitle,
+          formSubtitle: data.form.formSubtitle,
+          formItems: data.form.formItems
+        });
+      } catch(err:any){
+        console.log(err);
+      }
+    };
+    if(isFirstLoad){
+      console.log("first if check, should only appear once when page loads");
+      getForm();
+      setFirstLoad(prevState => !prevState);
+      console.log(formData);
+    }
+
+  }, [formId, formData, isFirstLoad]);
+
+  useEffect( () => {
+    const saveForm = async() => {
+      console.log("inside saving form per minute");
+      console.log(formData.formTitle);
+      if(formData.formItems.length > 0){
+        console.log("saving form happening");
+        await axios.post(
+          `${FORM_UPDATE_URL}/${formId}`,
+          formData
+        );
+      }
+    }
+    const interval = setInterval(saveForm, MINUTE_MS);
+    return () => clearInterval(interval);
+  }, [formData, formId]);
 
   return (
     <div className={"p-pt-6 p-px-6"}>
@@ -586,7 +622,7 @@ export const FormBuilder: React.FunctionComponent = () => {
               <div className="p-d-flex p-flex-column p-col">
                 <InputText
                   className={formError.formTitle && "p-invalid"}
-                  value={formData.formTitle}
+                  value={formTitle}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -603,7 +639,7 @@ export const FormBuilder: React.FunctionComponent = () => {
             <Button
               className="p-mx-2"
               label="Save and Preview"
-              onClick={onSave}
+              onClick={onSavePreview}
             />
             <Button
               className="p-mx-2 p-button-success"

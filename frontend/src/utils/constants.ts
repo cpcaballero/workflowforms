@@ -8,3 +8,6 @@ export const FORM_PREVIEW_URL = "/form/preview";
 export const FORM_GET_URL = "/form";
 export const FORM_SAVE_ANSWER_URL = "/form/answers/save"
 export const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/lundytest/raw/upload"
+export const STAGE_ENCODED_ID = "622b28d90acbd7afc84b2ea1";
+export const STAGE_COMPLETED_ID = "622b29160acbd7afc84b2ea2";
+export const MINUTE_MS = 60000;
