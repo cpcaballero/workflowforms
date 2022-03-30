@@ -12,7 +12,7 @@ import { Toast } from 'primereact/toast';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { useNavigate, useParams } from "react-router-dom";
-import useCheckLogin from "../../utils/useCheckLogin";
+// import useCheckLogin from "../../utils/useCheckLogin";
 import { v4 as uuidv4 } from 'uuid';
 
 import styles from "./FormBuilder.module.css";
@@ -23,6 +23,16 @@ import {
   FORM_PREVIEW_URL,
   FORM_GET_URL,
   MINUTE_MS,
+  FORMITEM_EMAIL_ID,
+  FORMITEM_FIRST_NAME_ID,
+  FORMITEM_MIDDLE_NAME_ID,
+  FORMITEM_LAST_NAME_ID,
+  FORMITEM_BIRTHDATE_ID,
+  FORMITEM_GENDER_ID,
+  PROJECT_GET_ALL_URL,
+  PROJECTS_URL,
+  FORM_TOGGLE_PUBLISH_URL,
+  FORM_PUBLISH_URL,
 } from "../../utils/constants";
 
 import axios from "axios";
@@ -35,12 +45,14 @@ interface iFormItem {
   required: boolean,
   uuid: string,
   acceptTypes: string[],
+  _id? : string | undefined,
 }
 
 interface iFormData {
   formTitle: string,
   formSubtitle: string,
   formItems: iFormItem[],
+  user: any
 };
 
 interface iUpdateField {
@@ -69,20 +81,35 @@ const fieldTypes = [
   { name: "Single Choice", value: "SINGLE_SELECT" },
   { name: "Multiple Choice", value: "MULTIPLE_SELECT" },
   { name: "Date", value: "DATE" },
-  { name: "File", value: "FILE" }
+  { name: "File", value: "FILE" },
+  { name: "Free Text", value: "FREE_TEXT" },
 
 ];
 
-export const FormBuilder: React.FunctionComponent = () => {
-  const user = useCheckLogin();
+const defaultFormItems = [
+  FORMITEM_EMAIL_ID,
+  FORMITEM_FIRST_NAME_ID,
+  FORMITEM_MIDDLE_NAME_ID,
+  FORMITEM_LAST_NAME_ID,
+  FORMITEM_BIRTHDATE_ID,
+  FORMITEM_GENDER_ID,
+];
+
+export const FormBuilder: React.FunctionComponent<{
+  user: any
+}> = (props) => {
+  console.log("component whole rerender");
+  const { user } = props;
   const { formId } = useParams();
   const navigate = useNavigate();
-  const { useState, useEffect, useMemo, useRef } = React;
+  const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
   const droppableId = useMemo(() => uuidv4(), []);
   const [formData, setFormData] = useState<iFormData>({
     formTitle: "",
     formSubtitle: "",
-    formItems: []
+    formItems: [],
+    user: user
   });
   const [isFirstLoad, setFirstLoad] = useState(true);
   const [profile, setProfile] = useState<any>();
@@ -99,6 +126,26 @@ export const FormBuilder: React.FunctionComponent = () => {
     formSubtitle,
     formItems,
   } = formData;
+
+  useEffect( () => {
+    console.log("changed formadata")
+    console.log(formData);
+  } , [formData]);
+
+  // useEffect( () => {
+  //   const getAuth = async() => {
+  //     const userData = CheckLogin();
+  //     setFormData(
+  //       (prevState) => ({
+  //         ...prevState,
+  //         user: userData
+  //       })
+  //     );
+  //   };
+  //   getAuth();
+  // }, []);
+
+
 
   const addField = (e: DropdownChangeParams) => {
     const { value } = e;
@@ -132,7 +179,9 @@ export const FormBuilder: React.FunctionComponent = () => {
     </div>
   );
 
-  const updateField = (props: iUpdateField) => {
+
+
+  const updateField = useCallback((props: iUpdateField) => {
     const { value, uuid, field, choiceIndex, checked } = props;
     let currentFormItems = [...formData.formItems];
     const currentIndex = currentFormItems.findIndex(
@@ -183,262 +232,14 @@ export const FormBuilder: React.FunctionComponent = () => {
       ...formData,
       formItems: currentFormItems
     });
-  };
+  }, [formData]);
 
-  const renderField = (formItem:iFormItem) => {
-    const errorMsg = formError.formItems.find(item => item.uuid === formItem.uuid)?.errors;
-    console.log(errorMsg);
-    switch (formItem.schema) {
-      case "TEXT":
-      case "LONG_TEXT":
-      case "YES_NO":
-      case "DATE":
-        return (
-          <div
-            className="p-grid"
-            key={"wrapper-" + formItem.uuid}
-          >
-            <div className="p-d-flex p-flex-column p-col-10">
-              <InputText
-                autoFocus
-                onChange={(e) => updateField({
-                  value: e.target.value,
-                  uuid: formItem.uuid,
-                  field: "text",
-                })}
-                className="p-my-2"
-                value={formItem.text}
-                placeholder="Enter question here"
-              />
-              <InputText
-                onChange={(e) => updateField({
-                  value: e.target.value,
-                  uuid: formItem.uuid,
-                  field: "subtext",
-                })}
-                className="p-inputtext-sm p-my-2"
-                value={formItem.subtext}
-                placeholder="Optional subtext here"
-              />
-              {
-                errorMsg?.map(msg => (
-                  <small className="p-error block">{msg}</small>
-                ))
-              }
-            </div>
-            <div className="p-col-2 p-d-flex p-ai-center">
-              <InputSwitch
-                checked={formItem.required}
-                onChange={(e) => updateField({
-                  value: e.value,
-                  uuid: formItem.uuid,
-                  field: "required",
-                })}
-                className="p-mr-2"
-              />
-              <div>Required?</div>
-            </div>
-          </div>
-        );
-      case "SINGLE_SELECT":
-      case "MULTIPLE_SELECT":
-        return (
-          <div
-            className="p-grid"
-            key={"wrapper-" + formItem.uuid}
-          >
-            <div className="p-d-flex p-flex-column p-col-10">
-              <InputText
-                autoFocus
-                onChange={(e) => updateField({
-                  value: e.target.value,
-                  uuid: formItem.uuid,
-                  field: "text",
-                })}
-                className="p-my-2"
-                value={formItem.text}
-                placeholder="Enter question here"
-              />
-              <InputText
-                onChange={(e) => updateField({
-                  value: e.target.value,
-                  uuid: formItem.uuid,
-                  field: "subtext",
-                })}
-                className="p-inputtext-sm p-my-2 p-my-2"
-                value={formItem.subtext}
-                placeholder="Optional subtext here"
-              />
-              <Button
-                className="pi pi-plus p-button-secondary p-col-2"
-                label="Add option"
-                onClick={(e) => updateField({
-                  uuid: formItem.uuid,
-                  field: "choice_add",
-                })}
-              />
-              <ul>
-                {
-                  formItem.choices?.map((choice, index) => (
-                    <li className="p-d-flex p-flex-row p-ai-center">
-                      {formItem.schema === "SINGLE_SELECT" && (
-                        <RadioButton
-                          checked={false}
-                          className="p-mr-3"
-                        />
-                      )}
-                      {formItem.schema === "MULTIPLE_SELECT" && (
-                        <Checkbox
-                          checked={false}
-                          className="p-mr-3"
-                        />
-                      )}
-                      <InputText
-                        className="p-inputtext-sm p-my-2 p-my-2"
-                        value={choice}
-                        onChange={(e) => updateField({
-                          value: e.target.value,
-                          uuid: formItem.uuid,
-                          field: "choice_update",
-                          choiceIndex: index,
-                        })}
-                      />
-                      <Button
-                        className="p-button-danger p-button-sm pi pi-times p-button-text p-button-rounded"
-                        onClick={(e) => updateField({
-                          uuid: formItem.uuid,
-                          field: "choice_delete",
-                          choiceIndex: index
-                        })}
-                      />
-                    </li>
-                  ))
-                }
-              </ul>
-              {
-                errorMsg?.map(msg => (
-                  <small className="p-error block">{msg}</small>
-                ))
-              }
-            </div>
-            <div className="p-col-2 p-d-flex p-ai-center">
-              <InputSwitch
-                checked={formItem.required}
-                onChange={(e) => updateField({
-                  value: e.target.value,
-                  uuid: formItem.uuid,
-                  field: "required",
-                })}
-                className="p-mr-2"
-              />
-              <div>Required?</div>
-            </div>
-          </div>
-        );
-      case "FILE":
-        const fileTypes = [
-          {
-            value: ".jpeg,.jpg,.png,.gif",
-            label: "Images (.jpeg, .jpg, .gif, or .png file extensions)",
-          },
-          {
-            value: ".doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            label: "Word Documents (.doc, or .docx file extensions)"
-          },
-          {
-            value: ".pdf",
-            label: "PDF File (.pdf file extensions)"
-          },
-          {
-            value: ".xls,.xlsx",
-            label: "Excel file (.xls, .xlsx file extensions)"
-          },
-        ];
-        return (
-          <div
-            className="p-grid"
-            key={"wrapper-" + formItem.uuid}
-          >
-            <div className="p-d-flex p-flex-column p-col-10">
-              <InputText
-                autoFocus
-                onChange={(e) => updateField({
-                  value: e.target.value,
-                  uuid: formItem.uuid,
-                  field: "text",
-                })}
-                className="p-my-2"
-                value={formItem.text}
-                placeholder="Enter question here"
-              />
-              <InputText
-                onChange={(e) => updateField({
-                  value: e.target.value,
-                  uuid: formItem.uuid,
-                  field: "subtext",
-                })}
-                className="p-inputtext-sm p-my-2 p-my-2"
-                value={formItem.subtext}
-                placeholder="Optional subtext here"
-              />
-              <h5>Filetypes to accept (choose one or more)</h5>
-              <ul>
-                {
-                  fileTypes.map(type => (
-                    <li className="p-d-flex p-flex-row p-ai-center">
-                      <Checkbox
-                        className="p-mr-2"
-                        inputId={"cb-img-" + formItem.uuid}
-                        value={type.value}
-                        onChange={(e) => updateField({
-                          value: e.value,
-                          uuid: formItem.uuid,
-                          field: "file_type",
-                          checked: e.checked,
-                        })}
-                        checked={formItem.acceptTypes.includes(type.value)}
-                      >
-                      </Checkbox>
-                      <label
-                        htmlFor={"cb-img-" + formItem.uuid}
-                        className="p-checkbox-label"
-                      >
-                        {type.label}
-                      </label>
-                    </li>
-                  ))
-                }
-              </ul>
-              {
-                errorMsg?.map(msg => (
-                  <small className="p-error block">{msg}</small>
-                ))
-              }
-            </div>
-            <div className="p-col-2 p-d-flex p-ai-center">
-              <InputSwitch
-                checked={formItem.required}
-                onChange={(e) => updateField({
-                  value: e.target.value,
-                  uuid: formItem.uuid,
-                  field: "required",
-                })}
-                className="p-mr-2"
-              />
-              <div>Required?</div>
-            </div>
-          </div>
-        );
-      default:
-        return (<>{" "}</>);
-    }
-  };
-
-  const formHeader = (
+  const formHeader = useCallback((
     options: any,
     itemNumber: number,
     uuid: string,
     schema: string,
+    _id: string | undefined,
     dragHandleProps: any
   ) => {
     const className = `${options.className} p-d-flex p-jc-between`;
@@ -455,18 +256,351 @@ export const FormBuilder: React.FunctionComponent = () => {
           </i>
           Form Entry #{itemNumber}: {fieldTypes.find(type => type.value === schema)?.name}
         </span>
-        <span>
-          <Button
-            className="pi pi-trash p-button-danger"
-            onClick={(e) => updateField({
-              uuid: uuid,
-              field: "field_remove",
-            })}
-          />
-        </span>
+        {
+          (!_id ||  (_id && !defaultFormItems.includes(_id))) && (
+            <span>
+              <Button
+                className="pi pi-trash p-button-danger"
+                onClick={(e) => updateField({
+                  uuid: uuid,
+                  field: "field_remove",
+                })}
+              />
+            </span>
+          )
+        }
       </div>
     )
-  }
+  }, [updateField]);
+
+  const renderField = useMemo( () => {
+    const fileTypes = [
+      {
+        value: ".jpeg,.jpg,.png,.gif",
+        label: "Images (.jpeg, .jpg, .gif, or .png file extensions)",
+      },
+      {
+        value: ".doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        label: "Word Documents (.doc, or .docx file extensions)"
+      },
+      {
+        value: ".pdf",
+        label: "PDF File (.pdf file extensions)"
+      },
+      {
+        value: ".xls,.xlsx",
+        label: "Excel file (.xls, .xlsx file extensions)"
+      },
+    ];
+
+    return formData.formItems.map(
+      (formItem, index) => {
+        let component:any = undefined;
+        const errorMsg = formError.formItems.find(item => item.uuid === formItem.uuid)?.errors;
+        switch (formItem.schema) {
+          case "TEXT":
+          case "LONG_TEXT":
+          case "YES_NO":
+          case "DATE":
+            component = (
+              <div
+                className="p-grid"
+                key={"wrapper-" + formItem.uuid}
+              >
+                <div className="p-d-flex p-flex-column p-col-10">
+                  <InputText
+                    autoFocus
+                    onChange={(e) => updateField({
+                      value: e.target.value,
+                      uuid: formItem.uuid,
+                      field: "text",
+                    })}
+                    className="p-my-2"
+                    value={formItem.text}
+                    placeholder="Enter question here"
+                  />
+                  <InputText
+                    onChange={(e) => updateField({
+                      value: e.target.value,
+                      uuid: formItem.uuid,
+                      field: "subtext",
+                    })}
+                    className="p-inputtext-sm p-my-2"
+                    value={formItem.subtext}
+                    placeholder="Optional subtext here"
+                  />
+                  {
+                    errorMsg?.map(msg => (
+                      <small className="p-error block">{msg}</small>
+                    ))
+                  }
+                </div>
+                <div className="p-col-2 p-d-flex p-ai-center">
+                  <InputSwitch
+                    checked={formItem.required}
+                    onChange={(e) => updateField({
+                      value: e.value,
+                      uuid: formItem.uuid,
+                      field: "required",
+                    })}
+                    className="p-mr-2"
+                  />
+                  <div>Required?</div>
+                </div>
+              </div>
+            );
+          break;
+          case "SINGLE_SELECT":
+          case "MULTIPLE_SELECT":
+            component = (
+              <div
+                className="p-grid"
+                key={"wrapper-" + formItem.uuid}
+              >
+                <div className="p-d-flex p-flex-column p-col-10">
+                  <InputText
+                    autoFocus
+                    onChange={(e) => updateField({
+                      value: e.target.value,
+                      uuid: formItem.uuid,
+                      field: "text",
+                    })}
+                    className="p-my-2"
+                    value={formItem.text}
+                    placeholder="Enter question here"
+                  />
+                  <InputText
+                    onChange={(e) => updateField({
+                      value: e.target.value,
+                      uuid: formItem.uuid,
+                      field: "subtext",
+                    })}
+                    className="p-inputtext-sm p-my-2 p-my-2"
+                    value={formItem.subtext}
+                    placeholder="Optional subtext here"
+                  />
+                  <Button
+                    className="pi pi-plus p-button-secondary p-col-2"
+                    label="Add option"
+                    onClick={(e) => updateField({
+                      uuid: formItem.uuid,
+                      field: "choice_add",
+                    })}
+                  />
+                  <ul>
+                    {
+                      formItem.choices?.map((choice, index) => (
+                        <li className="p-d-flex p-flex-row p-ai-center">
+                          {formItem.schema === "SINGLE_SELECT" && (
+                            <RadioButton
+                              checked={false}
+                              className="p-mr-3"
+                            />
+                          )}
+                          {formItem.schema === "MULTIPLE_SELECT" && (
+                            <Checkbox
+                              checked={false}
+                              className="p-mr-3"
+                            />
+                          )}
+                          <InputText
+                            className="p-inputtext-sm p-my-2 p-my-2"
+                            value={choice}
+                            onChange={(e) => updateField({
+                              value: e.target.value,
+                              uuid: formItem.uuid,
+                              field: "choice_update",
+                              choiceIndex: index,
+                            })}
+                          />
+                          <Button
+                            className="p-button-danger p-button-sm pi pi-times p-button-text p-button-rounded"
+                            onClick={(e) => updateField({
+                              uuid: formItem.uuid,
+                              field: "choice_delete",
+                              choiceIndex: index
+                            })}
+                          />
+                        </li>
+                      ))
+                    }
+                  </ul>
+                  {
+                    errorMsg?.map(msg => (
+                      <small className="p-error block">{msg}</small>
+                    ))
+                  }
+                </div>
+                <div className="p-col-2 p-d-flex p-ai-center">
+                  <InputSwitch
+                    checked={formItem.required}
+                    onChange={(e) => updateField({
+                      value: e.target.value,
+                      uuid: formItem.uuid,
+                      field: "required",
+                    })}
+                    className="p-mr-2"
+                  />
+                  <div>Required?</div>
+                </div>
+              </div>
+            );
+          break;
+          case "FILE":
+            component =  (
+              <div
+                className="p-grid"
+                key={"wrapper-" + formItem.uuid}
+              >
+                <div className="p-d-flex p-flex-column p-col-10">
+                  <InputText
+                    autoFocus
+                    onChange={(e) => updateField({
+                      value: e.target.value,
+                      uuid: formItem.uuid,
+                      field: "text",
+                    })}
+                    className="p-my-2"
+                    value={formItem.text}
+                    placeholder="Enter question here"
+                  />
+                  <InputText
+                    onChange={(e) => updateField({
+                      value: e.target.value,
+                      uuid: formItem.uuid,
+                      field: "subtext",
+                    })}
+                    className="p-inputtext-sm p-my-2 p-my-2"
+                    value={formItem.subtext}
+                    placeholder="Optional subtext here"
+                  />
+                  <h5>Filetypes to accept (choose one or more)</h5>
+                  <ul>
+                    {
+                      fileTypes.map(type => (
+                        <li className="p-d-flex p-flex-row p-ai-center">
+                          <Checkbox
+                            className="p-mr-2"
+                            inputId={"cb-img-" + formItem.uuid}
+                            value={type.value}
+                            onChange={(e) => updateField({
+                              value: e.value,
+                              uuid: formItem.uuid,
+                              field: "file_type",
+                              checked: e.checked,
+                            })}
+                            checked={formItem.acceptTypes.includes(type.value)}
+                          >
+                          </Checkbox>
+                          <label
+                            htmlFor={"cb-img-" + formItem.uuid}
+                            className="p-checkbox-label"
+                          >
+                            {type.label}
+                          </label>
+                        </li>
+                      ))
+                    }
+                  </ul>
+                  {
+                    errorMsg?.map(msg => (
+                      <small className="p-error block">{msg}</small>
+                    ))
+                  }
+                </div>
+                <div className="p-col-2 p-d-flex p-ai-center">
+                  <InputSwitch
+                    checked={formItem.required}
+                    onChange={(e) => updateField({
+                      value: e.target.value,
+                      uuid: formItem.uuid,
+                      field: "required",
+                    })}
+                    className="p-mr-2"
+                  />
+                  <div>Required?</div>
+                </div>
+              </div>
+            );
+          break;
+          case "FREE_TEXT":
+            component = (
+              <>
+                <div
+                  className="p-grid"
+                  key={"wrapper-" + formItem.uuid}
+                >
+                  <div className="p-d-flex p-flex-column p-col-10">
+                    <InputTextarea
+                      autoFocus
+                      autoResize
+                      onChange={(e) => updateField({
+                        value: e.target.value,
+                        uuid: formItem.uuid,
+                        field: "text",
+                      })}
+                      className="p-my-2"
+                      value={formItem.text}
+                      placeholder="Enter free text here"
+                    />
+                  </div>
+                </div>
+              </>
+            );
+            break;
+          default:
+            component = (<span></span>);
+          break;
+        }
+        return(
+          <Draggable
+            key={formItem.uuid}
+            draggableId={"draggable-" + formItem.uuid}
+            index={index}
+          >
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.draggableProps}
+                style={{
+                  ...provided.draggableProps.style,
+                  boxShadow: snapshot.isDragging
+                    ? "0 0 0.4rem #666"
+                    : "none"
+                }}
+              >
+                <Panel
+                  className={
+                    "p-my-3 " +
+                    ((
+                      formError.formItems.find(
+                        item => item.uuid === formItem.uuid
+                      )?.errors
+                    ) && styles.invalidPanel)
+                  }
+                  headerTemplate={
+                    (options) => formHeader(
+                      options,
+                      index + 1,
+                      formItem.uuid,
+                      formItem.schema,
+                      formItem._id,
+                      { ...provided.dragHandleProps }
+                    )
+                  }
+                >
+                  {component}
+                </Panel>
+              </div>
+            )}
+          </Draggable>
+        )
+      }
+
+    )
+
+
+  }, [formError.formItems, updateField, formData.formItems, formHeader] );
 
   const hasEmptyFields = () => {
     let isEmptyFields = false;
@@ -478,6 +612,10 @@ export const FormBuilder: React.FunctionComponent = () => {
     if (formTitle === "") {
       isEmptyFields = true;
       errors.formTitle = "A Form Title is required.";
+    }
+    if (formTitle === "Untitled Form") {
+      isEmptyFields = true;
+      errors.formTitle = "A Form Title other than the default title is required";
     }
     if(formData.formItems.length === 0) {
       isEmptyFields = true;
@@ -518,8 +656,47 @@ export const FormBuilder: React.FunctionComponent = () => {
     return isEmptyFields;
   }
 
+  const onSavePublish = async () => {
+    console.log(formData);
+    if (hasEmptyFields()) {
+      toastRef?.current?.show({
+        severity: "error",
+        summary: "Form Save Failed",
+        detail: "Please check fields and notes highlighted in red.",
+        life: 5000
+      });
+      return;
+    }
+    try{
+      await axios.post(
+        `${FORM_UPDATE_URL}/${formId}`,
+          formData,
+      );
+      await axios.get(
+        `${FORM_PUBLISH_URL}/${formId}`
+      );
 
-  const onSavePreview = async() => {
+      toastRef?.current?.show({
+        severity: "success",
+        summary: "Form Saved and Published",
+        detail: "Your form is now published. You will be redirected to Projects shortly.",
+        life: 5000
+      });
+      setTimeout(function () {
+        navigate(PROJECTS_URL);
+      }, 4000);
+    } catch (err:any) {
+      const { message } = err.response.data;
+      toastRef.current?.show({
+        severity: "error",
+        summary: "Form Save Failed",
+        detail: message,
+        life: 5000
+      });
+    }
+  }
+
+  const onSavePreview = async () => {
     if (hasEmptyFields()) {
       toastRef?.current?.show({
         severity: "error",
@@ -546,8 +723,6 @@ export const FormBuilder: React.FunctionComponent = () => {
       setTimeout(function () {
         window.open(newWindowPath, "_blank")?.focus();
       }, 3500);
-
-
     } catch (err:any) {
       const { message } = err.response.data;
       toastRef.current?.show({
@@ -560,25 +735,11 @@ export const FormBuilder: React.FunctionComponent = () => {
   }
 
   useEffect(() => {
-    if (user !== undefined) {
-      setProfile(user);
-    }
-  }, [user]);
-
-  useEffect( () => {
-    setFormData(
-      (prevState) => ({
-        ...prevState,
-        user:profile
-      })
-    );
-  }, [profile]);
-
-  useEffect(() => {
     const getForm = async () => {
       try{
         const { data } = await axios.get(`${DEV_BASEPATH}${FORM_GET_URL}/${formId}`);
         setFormData({
+          ...formData,
           formTitle: data.form.formTitle,
           formSubtitle: data.form.formSubtitle,
           formItems: data.form.formItems
@@ -599,9 +760,9 @@ export const FormBuilder: React.FunctionComponent = () => {
   useEffect( () => {
     const saveForm = async() => {
       console.log("inside saving form per minute");
-      console.log(formData.formTitle);
       if(formData.formItems.length > 0){
         console.log("saving form happening");
+        console.log(formData);
         await axios.post(
           `${FORM_UPDATE_URL}/${formId}`,
           formData
@@ -644,6 +805,7 @@ export const FormBuilder: React.FunctionComponent = () => {
             <Button
               className="p-mx-2 p-button-success"
               label="Save and Publish"
+              onClick={onSavePublish}
             />
           </div>
           <Toast ref={toastRef} />
@@ -688,52 +850,7 @@ export const FormBuilder: React.FunctionComponent = () => {
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                 >
-                  {
-                    formData.formItems.map(
-                      (formItem, index) => (
-                        <Draggable
-                          key={formItem.uuid}
-                          draggableId={"draggable-" + formItem.uuid}
-                          index={index}
-                        >
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              style={{
-                                ...provided.draggableProps.style,
-                                boxShadow: snapshot.isDragging
-                                  ? "0 0 0.4rem #666"
-                                  : "none"
-                              }}
-                            >
-                              <Panel
-                                className={
-                                  "p-my-3 " +
-                                  ((
-                                    formError.formItems.find(
-                                      item => item.uuid === formItem.uuid
-                                    )?.errors
-                                  ) && styles.invalidPanel)
-                                }
-                                headerTemplate={
-                                  (options) => formHeader(
-                                    options,
-                                    index + 1,
-                                    formItem.uuid,
-                                    formItem.schema,
-                                    { ...provided.dragHandleProps }
-                                  )
-                                }
-                              >
-                                {renderField(formItem)}
-                              </Panel>
-                            </div>
-                          )}
-                        </Draggable>
-                      )
-                    )
-                  }
+                  {renderField}
                   {provided.placeholder}
                 </div>
               )}

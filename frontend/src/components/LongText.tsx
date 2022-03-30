@@ -9,6 +9,7 @@ export const LongText = (props:any) => {
   return (
     <div className="p-d-flex p-flex-column p-col-10">
       <InputTextarea
+        autoResize
         className="p-my-2"
         onChange={
           (e) => onChangeFn(e.target.value)

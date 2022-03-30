@@ -1,8 +1,9 @@
 import * as React from "react";
 import { Button } from "primereact/button";
-import { Divider } from 'primereact/divider';
-import { Panel } from 'primereact/panel';
-import { Toast } from 'primereact/toast';
+import { Divider } from "primereact/divider";
+import { Panel } from "primereact/panel";
+import { Toast } from "primereact/toast";
+import { Dialog } from "primereact/dialog";
 import { useNavigate, useParams } from "react-router-dom";
 import useCheckLogin from "../../utils/useCheckLogin";
 
@@ -13,7 +14,7 @@ import {
   DEV_BASEPATH,
   FORM_GET_URL,
   FORM_SAVE_ANSWER_URL,
-  FORM_UPDATE_URL
+  PROJECT_FORM_BUILDER_URL,
 } from "../../utils/constants";
 
 import axios from "axios";
@@ -26,6 +27,7 @@ import {
   MultipleSelect,
   FileUploader,
   DateInput,
+  FreeText
 } from "../../components";
 interface iFormItem {
   text: string,
@@ -35,7 +37,8 @@ interface iFormItem {
   required: boolean,
   uuid: string,
   acceptTypes: string[],
-  errorMsg : string[]
+  errorMsg : string[],
+  _id? : string
 }
 interface iFormStructure {
   formTitle: string,
@@ -51,13 +54,23 @@ interface iFormAnswer {
   value?: any
 }
 
-export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) => {
-  const { preview } = props;
-  const user = useCheckLogin();
+export const FormViewer: React.FunctionComponent<{
+  preview: boolean,
+  editable: boolean,
+  user?: any
+}> = (props) => {
+  const {
+    preview,
+    editable,
+  } = props;
+  // const user = useCheckLogin();
   const { formId } = useParams();
   const navigate = useNavigate();
   const { useState, useEffect, useMemo, useRef, useCallback } = React;
+  const [ showFinishDialog, setFinishDialog ] = useState<boolean>(false);
+  const [ isEditable, setEditable ] = useState<boolean>();
   const [profile, setProfile] = useState<any>();
+  const [ isFormPublished, setFormPublished ] = useState<boolean>();
   const toastRef = useRef<null | Toast>(null);
   const [ formStructure, setFormStructure ] = useState<iFormStructure>({
     formTitle: "",
@@ -70,24 +83,24 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
   });
   const [ formAnswers, setFormAnswers ] = useState<iFormAnswer[]>([]);
 
-
-  useEffect(() => {
-    if (user !== undefined) {
-      setProfile(user);
-    }
-  }, [user]);
-
   useEffect(() => {
     const getForm = async () => {
       try{
         const { data } = await axios.get(`${DEV_BASEPATH}${FORM_GET_URL}/${formId}`);
+        setFormPublished(
+          data.form.isPublished === "Yes"
+        );
         setFormStructure(data.form);
+        setEditable(
+          editable && (
+            data.form?.formEntries?.length === 0)
+        );
       } catch(err:any){
         console.log(err);
       }
     };
     getForm();
-  }, [formId]);
+  }, [formId, editable]);
 
   useEffect(() => {
     console.log("initial useeffect called");
@@ -103,8 +116,7 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
         )
       );
     }
-
-  }, [formStructure.formItems, formAnswers.length]);
+  }, [formStructure, formAnswers.length]);
 
 
   const saveAnswer = useCallback((index:number, value:any) => {
@@ -149,10 +161,9 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
               }
             </span>
           </div>
-
         </span>
       </div>
-    )
+    );
   }
 
   const ItemWrapper = useCallback((props: any) => {
@@ -170,7 +181,7 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
         headerTemplate={
           (options) => formHeader(
             options,
-            index + 1,
+            index,
             formItem.uuid,
             formItem.text,
             formItem.required,
@@ -180,20 +191,22 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
       >
         {props.children}
       </Panel>
-    )
+    );
   }, []);
 
   const formItems = useMemo(() => {
     console.log("renderfield rerender");
     const { formItems } = formStructure;
     console.log(formItems);
-    return formItems.map(
+    let itemNumber = 0;
+    return formItems?.map(
       (formItem, index) => {
         switch (formItem.schema) {
           case "TEXT":
+            itemNumber = itemNumber + 1;
             return (
               <ItemWrapper
-                index={index}
+                index={itemNumber}
                 formItem={formItem}
               >
                 <ShortText
@@ -204,9 +217,10 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
               </ItemWrapper>
             );
           case "LONG_TEXT":
+            itemNumber = itemNumber + 1;
             return (
               <ItemWrapper
-                index={index}
+                index={itemNumber}
                 formItem={formItem}
               >
                 <LongText
@@ -217,9 +231,10 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
               </ItemWrapper>
             );
           case "YES_NO":
+            itemNumber = itemNumber + 1;
             return (
               <ItemWrapper
-                index={index}
+                index={itemNumber}
                 formItem={formItem}
               >
                 <BinarySelect
@@ -230,9 +245,10 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
               </ItemWrapper>
             );
           case "SINGLE_SELECT":
+            itemNumber = itemNumber + 1;
             return (
               <ItemWrapper
-                index={index}
+                index={itemNumber}
                 formItem={formItem}
               >
                 <SingleSelect
@@ -243,9 +259,10 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
               </ItemWrapper>
             );
           case "MULTIPLE_SELECT":
+            itemNumber = itemNumber + 1;
             return (
               <ItemWrapper
-                index={index}
+                index={itemNumber}
                 formItem={formItem}
               >
                 <MultipleSelect
@@ -256,9 +273,10 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
               </ItemWrapper>
             );
           case "DATE":
+            itemNumber = itemNumber + 1;
             return (
               <ItemWrapper
-                index={index}
+                index={itemNumber}
                 formItem={formItem}
               >
                 <DateInput
@@ -267,11 +285,12 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
                   value={formAnswers[index]?.value}
                 />
               </ItemWrapper>
-            )
+            );
           case "FILE":
+            itemNumber = itemNumber + 1;
             return (
               <ItemWrapper
-                index={index}
+                index={itemNumber}
                 formItem={formItem}
               >
                 <FileUploader
@@ -280,10 +299,16 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
                   value={formAnswers[index]?.value}
                 />
               </ItemWrapper>
-            )
+            );
+          case "FREE_TEXT":
+              return (
+                <FreeText
+                  value={formItem.text}
+                />
+              )
         }
       }
-    )
+    );
   }, [formAnswers, saveAnswer, formStructure, ItemWrapper]);
 
 
@@ -354,7 +379,9 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
     let isError = false;
 
     const updatedFormAnswers = formAnswers.map(answer => {
-      const currentFormItemIndex = currentFormItems.findIndex(item => item.uuid === answer.uuid);
+      const currentFormItemIndex = currentFormItems.findIndex(
+        item => item.uuid === answer.uuid
+      );
       if (filteredUuid.includes(answer.uuid)) {
         const uploadData = uploadResult.find(result => result.uuid === answer.uuid);
         if (uploadData && uploadData.responseStatus === 200) {
@@ -401,7 +428,7 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
         (formAnswer, index) => {
           let formItemObjId = formStructure.formItems.find(
             item => item.uuid === formAnswer.uuid
-          )?.uuid;
+          )?._id;
           return {
             formItem: formItemObjId,
             answer: formAnswer.value,
@@ -409,59 +436,131 @@ export const FormViewer: React.FunctionComponent<{preview: boolean}> = (props) =
           }
         }
       );
-      const saveAnswerResponse = axios.post(
+      const saveAnswerResponse = await axios.post(
         `${DEV_BASEPATH}${FORM_SAVE_ANSWER_URL}/${formId}`,
         {
           answers: finalAnswers
         }
       );
 
+      if (
+          saveAnswerResponse.data.success
+          && saveAnswerResponse.data.newEntry
+        ) {
+        setFinishDialog(true);
+      }
     } catch (err:any) {
       console.log(err);
     }
   }
 
+  const navigateToFormBuilder = () => {
+    navigate(`${PROJECT_FORM_BUILDER_URL}/${formId}`);
+  }
+
 
   return (
     <div className={"p-pt-6 p-px-6"}>
-      <div className="p-d-flex p-flex-column p-jc-start">
-        <div className={"p-d-flex p-flex-row p-jc-between p-grid " + styles.stickyHeader} >
-          <div className="p-d-flex p-flex-column p-col p-sm-10 p-md-8 p-lg-6">
-            <div className="p-d-flex p-flex-row p-ai-center">
-              <h1 className="p-mb-0 p-mr-2">{formStructure.formTitle}</h1>
-            </div>
-          </div>
-          <div className="p-d-flex p-ai-center">
-            {
-              preview && (
-              <Button
-                className="p-mx-2"
-                label="Close this tab"
-                onClick={() => window.close()}
-              />)
-            }
-            {
-              !preview && (
-              <Button
-                className="p-button-success p-mx-2"
-                label="Submit Form"
-                onClick={onSaveForm}
-              />)
-            }
-          </div>
-          <Toast ref={toastRef} />
-        </div>
-        <div className="p-d-flex p-col-10 p-flex-column p-ac-stretch p-mt-3">
-          <h3 className="p-mb-0 p-mr-2">{formStructure.formSubtitle}</h3>
-        </div>
-        <Divider />
-        <h2>Items/Questions:</h2>
-        <Button label="check" onClick={() => console.log(formAnswers)} />
-          <div className="p-sm-12 p-md-8 p-as-center p-mb-5">
-            <Divider />
-            { formItems }
-          </div>
-      </div>
+      {
+        preview || isFormPublished
+          ? (
+            <>
+              <div className="p-d-flex p-flex-column p-jc-start">
+                <div
+                  className={
+                    "p-d-flex p-flex-row p-jc-between p-grid "
+                    + (
+                        showFinishDialog
+                          ? styles.bringToBackHeader
+                          : styles.stickyHeader
+                      )
+                  }
+                >
+                  <div className="p-d-flex p-flex-column p-col p-sm-10 p-md-8 p-lg-6">
+                    <div className="p-d-flex p-flex-row p-ai-center p-jc-start">
+                      <h1 className="p-mb-0 p-mr-2">{formStructure.formTitle}</h1>
+                      {
+                        preview && (
+                          <h3 className="p-mb-0 p-mr-2">(Preview Only)</h3>
+                        )
+                      }
+                    </div>
+                  </div>
+                  <div className="p-d-flex p-ai-center">
+                    {
+                      preview && (
+                      <Button
+                        className="p-mx-2"
+                        label="Close this tab"
+                        onClick={() => window.close()}
+                      />)
+                    }
+                    {
+                      !preview && (
+                      <Button
+                        className="p-button-success p-mx-2"
+                        label="Submit Form"
+                        onClick={onSaveForm}
+                        disabled={showFinishDialog}
+                      />)
+                    }
+                    {
+                      editable &&  (
+                        <Button
+                        className="p-button-success p-mx-2"
+                        label="Edit form"
+                        onClick={navigateToFormBuilder}
+                        disabled={!isEditable}
+                        tooltipOptions={{
+                          position: "top",
+                          showOnDisabled: true
+                        }}
+                        tooltip={!isEditable ? "Cannot edit forms with respondents already" : undefined}
+                      />)
+                    }
+                  </div>
+                  <Toast ref={toastRef} />
+                </div>
+                <div className="p-d-flex p-col-10 p-flex-column p-ac-stretch p-mt-3">
+                  <h3 className="p-mb-0 p-mr-2">{formStructure.formSubtitle}</h3>
+                </div>
+                <Divider />
+                <h2>Items/Questions:</h2>
+                <Button label="check" onClick={() => console.log(formAnswers)} />
+                  <div className="p-sm-12 p-md-8 p-as-center p-mb-5">
+                    <Divider />
+                    { formItems }
+                  </div>
+              </div>
+              <Dialog
+                header="Form Submitted"
+                visible={showFinishDialog}
+                style={{width: "30vw"}}
+                onHide={ () => setFinishDialog(false) }
+                closable={false}
+                closeOnEscape={false}
+                draggable={false}
+                resizable={false}
+                showHeader={true}
+                blockScroll={true}
+                footer={
+                  <Button
+                    label="Close this tab"
+                    onClick={() => window.close()}
+                  />
+                }
+              >
+                Thank you for finishing the form.
+                Our back-office will reach out to you regarding your answers as soon as possible.
+                You may now close this tab.
+              </Dialog>
+            </>
+          )
+          : (
+            <p>Form not found</p>
+          )
+      }
+
     </div>
   );
 }

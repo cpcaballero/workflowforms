@@ -8,7 +8,7 @@ import styles from "./Login.module.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import setAuthToken from "../../utils/setAuthToken";
-import { AUTH_LOGIN_URL, AUTH_LOAD_USER_URL } from "../../utils/constants";
+import { AUTH_LOGIN_URL, AUTH_LOAD_USER_URL, PROJECTS_URL } from "../../utils/constants";
 
 export const Login: React.FunctionComponent = () => {
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ export const Login: React.FunctionComponent = () => {
           formData
         );
         localStorage.setItem("token", data.token);
-        navigate("/projects");
+        navigate(PROJECTS_URL);
       }
     } catch(err:any){
       const { message } = err.response.data;

@@ -1,16 +1,41 @@
 import * as React from "react";
-// import { Card } from "antd";
 import { Button }  from "primereact/button";
 import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Dialog } from "primereact/dialog";
+import { DataTable } from "primereact/datatable";
+import {
+  FilterMatchMode,
+  FilterOperator,
+} from 'primereact/api';
+import { Column } from "primereact/column";
+import { Tag } from "primereact/tag";
+import { Dropdown } from "primereact/dropdown";
+import { Calendar } from "primereact/calendar";
+import { confirmDialog } from 'primereact/confirmdialog';
+
 import styles from "./Projects.module.css";
-import { PROJECT_CREATE_URL } from "../../utils/constants";
+import {
+  DEV_BASEPATH,
+  FORM_PREVIEW_URL,
+  FORM_VIEW_EDITABLE_URL,
+  PROJECT_CREATE_URL,
+  PROJECT_GET_ALL_URL,
+  FORMITEM_EMAIL_ID,
+  FORMITEM_FIRST_NAME_ID,
+  FORMITEM_MIDDLE_NAME_ID,
+  FORMITEM_LAST_NAME_ID,
+  FORMITEM_BIRTHDATE_ID,
+  FORMITEM_GENDER_ID,
+  PROJECT_FORM_BUILDER_URL,
+  FORM_PUBLISH_URL,
+  PROJECTS_URL,
+  FORM_UNPUBLISH_URL,
+} from "../../utils/constants";
 import { useNavigate } from "react-router-dom";
-
-import useCheckLogin from "../../utils/useCheckLogin";
-
 import axios from "axios";
+import moment from "moment-timezone";
+import { Toast } from "primereact/toast";
 
 
 interface iFormData {
@@ -19,15 +44,16 @@ interface iFormData {
   user: any
 }
 
-export const Projects: React.FunctionComponent = () => {
-  const user = useCheckLogin();
+export const Projects: React.FunctionComponent<{user: any}> = (props) => {
+  const { user } = props;
   const navigate = useNavigate();
   const {useState, useEffect, useRef} = React;
   const addStageTextRef = useRef<any>(null);
+  const toastRef = useRef<any>(null);
   const [formData, setFormData] = useState<iFormData>({
     projectName: "",
     stages: [],
-    user: undefined
+    user: user
   });
   const [profile, setProfile] = useState<any>();
   const [formError, setFormError] = useState({
@@ -38,32 +64,18 @@ export const Projects: React.FunctionComponent = () => {
   const {projectName} = formData;
   const [newStage, setNewStage] = useState<string>("");
   const [draftStages, setDraftStages] = useState<string[]>([]);
-  // const validateForm = () => {
-  //   let errors = {
-  //     username: "",
-  //     password: ""
-  //   };
-  //   let hasError = false;
-  //   if(username === ""){
-  //     errors.username = "Username is required";
-  //     hasError = true;
-  //   }
-  //   if(password === ""){
-  //     errors.password = "Password is required";
-  //     hasError = true;
-  //   }
-  //   setFormError(errors);
-  //   return hasError;
-  // }
 
-  // const handleSubmit = async() => {
-  //   if(!validateForm()){
-  //     await axios.post(
-  //       AUTH_LOGIN_URL,
-  //       formData
-  //     );
-  //   }
-  // };
+  const [projects, setProjects] = useState();
+
+  const filters = {
+    // 'global': { value: null, matchMode: FilterMatchMode.CONTAINS },
+    'form.formTitle': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    'form.isPublished': { value: null, matchMode: FilterMatchMode.EQUALS },
+    'form.formEntries.length': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
+    'stages.length': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+    'createdBy._id': { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+    'dateCreated': { value: null, matchMode: FilterMatchMode.BETWEEN },
+  };
 
   const handleOnChange = (e:React.ChangeEvent<HTMLInputElement>) => {
     return setFormData({
@@ -85,9 +97,20 @@ export const Projects: React.FunctionComponent = () => {
     try{
         const project = await axios.post(
           PROJECT_CREATE_URL,
-          {...formData, stages: draftStages}
+          {
+            ...formData,
+            stages: draftStages,
+            defaultFormItems: [
+              FORMITEM_EMAIL_ID,
+              FORMITEM_FIRST_NAME_ID,
+              FORMITEM_MIDDLE_NAME_ID,
+              FORMITEM_LAST_NAME_ID,
+              FORMITEM_GENDER_ID,
+              FORMITEM_BIRTHDATE_ID,
+            ]
+          }
         );
-        navigate(`/project/form-builder/${project.data.project.formId}`);
+        navigate(`${PROJECT_FORM_BUILDER_URL}/${project.data.project.form}`);
     }catch(err:any){
 
     }
@@ -115,36 +138,382 @@ export const Projects: React.FunctionComponent = () => {
   }
 
   useEffect( () => {
+    const getAllProjects = async () => {
+      const projectsDetails = await axios.get(`${DEV_BASEPATH}${PROJECT_GET_ALL_URL}`);
+      setProjects(projectsDetails.data);
+    };
+    getAllProjects();
+  }, []);
+
+  useEffect(() => {
+    console.log(user);
+  }, [user]);
+
+
+  useEffect( () => {
     setNewStage("");
     addStageTextRef?.current?.focus();
   }, [draftStages]);
 
-  useEffect( () => {
-    if(user !== undefined){
-      setProfile(user);
-    }
-  }, [user]);
+  const createdByTemplate = (row:any) => {
+    return (<>
+      {row.createdBy.lastName},
+      {" "}
+      {row.createdBy.firstName}
+      {" "}
+      {row.createdBy.middleName && row.createdBy.middleName[0]}
+    </>);
+  }
 
-  useEffect( () => {
-    setFormData(
-      (prevState) => ({
-        ...prevState,
-        user:profile
-      })
+  const dateFilterTemplate = (options:any) => {
+    return (
+      <Calendar
+        value={options.value}
+        onChange={(e) => options.filterCallback(e.value, options.index)}
+        dateFormat="mm/dd/yy"
+        placeholder="mm/dd/yyyy"
+        mask="99/99/9999"
+      />
     );
-  }, [profile]);
+}
 
+  const respondentsTemplate = (row:any) => {
+    return (
+      <>
+        {
+          row.form
+            ? row.form.formEntries.length
+            : 0
+        }
+      </>
+    );
+  }
+
+  const viewForm = (form: any) => {
+    const basePath = window.location.host;
+    const protocol = window.location.protocol;
+    let newWindowPath = "";
+
+    if (form.formEntries && form.formEntries.length > 0) {
+      //preview only
+      // navigate(`/form/preview/${form._id}`);
+      newWindowPath = `${protocol}//${basePath}${FORM_PREVIEW_URL}/${form._id}`
+    } else if (form.formEntries && form.formEntries.length === 0) {
+        //preview and editable
+        newWindowPath = `${protocol}//${basePath}${FORM_VIEW_EDITABLE_URL}/${form._id}`
+    } else {
+      // preview and editable
+      newWindowPath = `${protocol}//${basePath}${FORM_VIEW_EDITABLE_URL}/${form._id}`
+    }
+    window.open(newWindowPath, "_blank")?.focus();
+
+  }
+
+  const publishForm = async (formId:string) => {
+    await axios.get(
+      `${FORM_PUBLISH_URL}/${formId}`
+    );
+    toastRef?.current?.show({
+      severity: "success",
+      summary: "Form Published",
+      detail: "Your form is now published and accessible to the public. This page will be refreshed shortly.",
+      life: 5000
+    });
+    setTimeout(function () {
+      window.location.reload();
+    }, 4000);
+  }
+
+  const unpublishForm = async (formId:string) => {
+    await axios.get(
+      `${FORM_UNPUBLISH_URL}/${formId}`
+    );
+    toastRef?.current?.show({
+      severity: "success",
+      summary: "Form Unpublished",
+      detail: "Your form is now unpublished and hidden from the public. This page will be refreshed shortly.",
+      life: 5000
+    });
+    setTimeout(function () {
+      window.location.reload();
+    }, 4000);
+  }
+
+  const confirmPublishAction = async (options:any) => {
+    const {
+      action,
+      formId,
+      projectName,
+      formTitle
+    } = options;
+
+    confirmDialog({
+      message: `Are you sure you want to ${action} form titled "${formTitle}" under project "${projectName}"?`,
+      header: `Action: ${action} form`,
+      icon: 'pi pi-info-circle',
+      acceptClassName: 'p-button-danger',
+      accept: action === "publish"
+        ? async () => await publishForm(formId)
+        : async () => await unpublishForm(formId),
+      reject: () => {},
+  });
+  };
+
+  const actionsTemplate = (row:any) => {
+    return (
+    <div className="p-d-flex p-flex-row" >
+      <Button
+        className="p-button p-button-rounded p-button-outlined p-mx-3"
+        icon="pi pi-sign-in"
+        tooltip="Manage respondents/entries"
+        tooltipOptions={{
+          position: "top"
+        }}
+      />
+      <Button
+        className="p-button p-button-rounded p-button-outlined p-mx-3"
+        icon="pi pi-align-justify"
+        tooltip="View form items/questions"
+        tooltipOptions={{
+          position: "top"
+        }}
+        onClick={() => viewForm(row.form)}
+      />
+      <Button
+        className="p-button p-button-rounded p-button-outlined p-mx-3"
+        icon={
+          row.form?.isPublished === "Yes"
+            ? "pi pi-ban"
+            : "pi pi-check"
+        }
+        tooltip={
+          row.form?.isPublished === "Yes"
+            ? "Unpublish form"
+            : (row.form?.formItems.length === 0)
+              ? "Cannot publish form without items/questions"
+              : "Publish form"
+        }
+        tooltipOptions={{
+          position: "top",
+          showOnDisabled: true
+        }}
+        disabled={row.form?.formItems.length === 0}
+        onClick={
+          () => confirmPublishAction(
+            {
+              action: row.form.isPublished === "Yes"
+                ? "unpublish"
+                : "publish",
+              formId: row.form._id,
+              projectName: row.projectName,
+              formTitle: row.form.formTitle
+            }
+          )
+        }
+      />
+    </div>);
+  }
+
+  const createdDateTemplate = (row:any) => {
+    const createdDate = moment(row.dateCreated);
+    return <>{createdDate.tz("Asia/Manila").format("MMM DD, YYYY hh:mm A")}</>
+  }
+
+  const publishedTemplate = (row:any) => {
+    return (
+      <Tag
+        value={row.form?.isPublished || "No"}
+        icon={
+          row.form?.isPublished === "Yes"
+            ? "pi pi-check"
+            : "pi pi-times"
+        }
+        severity={
+          row.form?.isPublished === "Yes"
+            ? "success"
+            : "danger"
+        }
+      >
+      </Tag>
+    );
+  }
+
+  const publishedItemFilterTemplate = (option:any) => {
+    return (
+      <Tag
+          value={option}
+          icon={
+            option === "Yes"
+              ? "pi pi-check"
+              : "pi pi-times"
+            }
+          severity={
+            option === "Yes"
+              ? "success"
+              : "danger"
+          }
+        >
+        </Tag>
+      );
+  }
+
+  const publishedFilterElement = (options:any) => {
+    return (
+      <Dropdown
+        value={options.value}
+        options={["Yes", "No"]}
+        onChange={(e) => options.filterCallback(e.value, options.index)}
+        itemTemplate={publishedItemFilterTemplate}
+        placeholder="Select a Status"
+        className="p-column-filter"
+        showClear
+      />
+    );
+  }
+
+  const filterDate = (value:any, filter: any) => {
+    const momentValue = moment(value).tz("Asia/Manila");
+    const momentFilter = moment(filter).tz("Asia/Manila");
+    if (value === undefined || value === null) {
+      return false;
+    }
+    if (
+      filter === undefined
+        || filter === null
+        || (typeof filter === 'string'
+        && filter.trim() === '')
+    ) {
+      return true;
+    }
+    return momentValue.dayOfYear() === momentFilter.dayOfYear();
+  }
+
+  const filterCreator = (value: any, filter: any) => {
+    if (value === undefined || value === null) {
+      return false;
+    }
+    if (
+      filter === undefined
+        || filter === null
+        || (typeof filter === 'string'
+        && filter.trim() === '')
+    ) {
+      return true;
+    }
+    const currentValue = value.lastName + ", " + value.firstName + " " + (value.middleName && value.middleName[0]);
+    return currentValue.toLowerCase().includes(filter.toLowerCase());
+  }
 
   return(
-    <div className={styles.loginWrapper + " p-pt-6 p-px-6"}>
-      <div className="p-d-flex p-jc-start p-ai-start">
+    <div className={styles.projectWrapper + " p-pt-6 p-px-6"}>
+      <div className="p-d-flex p-jc-start p-ai-start p-flex-row">
         <h1>Projects</h1>
+        <Toast ref={toastRef} />
         <Button
           label="Create"
           className="p-ml-5"
           onClick={() => setCreateProjectModal(true)}
         />
       </div>
+      <div className="p-d-flex p-jc-center p-mt-6">
+        <DataTable
+          style={{flex: "1"}}
+          value={projects}
+          paginator
+          rows={10}
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+          rowsPerPageOptions={[10,25,50]}
+          dataKey="id"
+          // onValueChange={filteredData => console.log(filteredData)}
+          // selection={selectedCustomers}
+          // onSelectionChange={e => setSelectedCustomers(e.value)}
+          // filters={filters}
+          filterDisplay="menu"
+          // loading={loading}
+          responsiveLayout="scroll"
+          // filters={null}
+          // globalFilterFields={['name', 'country.name', 'representative.name', 'balance', 'status']}
+          emptyMessage="No projects found."
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} projects">
+          <Column
+            field="projectName"
+            header="Project Name"
+            showFilterOperator={false}
+            showAddButton={false}
+            sortable
+            filter
+          />
+          <Column
+            field="form.formTitle"
+            header="Form Title"
+            showFilterOperator={false}
+            showAddButton={false}
+            sortable
+            filter
+          />
+          <Column
+            header="Published"
+            field="form.isPublished"
+            body={publishedTemplate}
+            showFilterOperator={false}
+            showFilterMatchModes={false}
+            filterElement={publishedFilterElement}
+            showAddButton={false}
+            sortable
+            filter
+          />
+          <Column
+            header="Respondents"
+            field="form.formEntries.length"
+            body={respondentsTemplate}
+            showFilterOperator={false}
+            dataType="numeric"
+            showAddButton={false}
+            sortable
+            filter
+          />
+          <Column
+            field="stages.length"
+            header="Stages"
+            showFilterOperator={false}
+            dataType="numeric"
+            showAddButton={false}
+            sortable
+            filter
+          />
+          <Column
+            field="createdBy"
+            body={createdByTemplate}
+            header="Created By"
+            showFilterOperator={false}
+            showFilterMatchModes={false}
+            filterMatchMode="custom"
+            filterFunction={(value,filter) => filterCreator(value,filter)}
+            showAddButton={false}
+            sortable
+            filter
+          />
+          <Column
+            field="dateCreated"
+            body={createdDateTemplate}
+            header="Date Created"
+            showFilterOperator={false}
+            dataType="date"
+            filterElement={dateFilterTemplate}
+            showFilterMatchModes={false}
+            filterMatchMode="custom"
+            filterFunction={(value, filter) => filterDate(value, filter)}
+            showAddButton={false}
+            sortable
+            filter
+          />
+          <Column
+            body={actionsTemplate}
+            header="Actions"
+          />
+        </DataTable>
+      </div>
+
       <Dialog
         draggable={false}
         footer={newProjectDialogFooter}
