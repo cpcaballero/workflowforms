@@ -8,13 +8,11 @@ const ProjectSchema = new mongoose.Schema({
   },
   stages: [
     {
-      stageId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Stage'
-      }
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Stage'
     }
   ],
-  formId: {
+  form: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Form'
   },
@@ -28,6 +26,6 @@ const ProjectSchema = new mongoose.Schema({
     default: Date.now,
     required: true
   },
-  
+
 });
 module.exports = mongoose.model("Project", ProjectSchema);

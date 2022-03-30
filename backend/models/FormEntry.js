@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const FormEntrySchema = new mongoose.Schema({
-  formId: {
+  form: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Form'
   },
@@ -14,6 +14,31 @@ const FormEntrySchema = new mongoose.Schema({
       answer: {
         type: mongoose.Schema.Types.Mixed,
         trim: true,
+      },
+      lastUpdated: {
+        type: Date,
+        default: Date.now,
+        required: true
+      },
+    }
+  ],
+  currentStage : {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Stage'
+  },
+  externalAnswers: [
+    {
+      formItem: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'FormItem'
+      },
+      answer: {
+        type: mongoose.Schema.Types.Mixed,
+        trim: true,
+      },
+      requestedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
       },
       lastUpdated: {
         type: Date,

@@ -4,12 +4,9 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { check, validationResult } = require('express-validator');
-const auth = require("../middleware/auth");
-const User = require("../models/User");
-const Project = require("../models/Project");
-const Stage = require("../models/Stage");
 const Form = require("../models/Form");
 const FormItem = require('../models/FormItem');
+const FormEntry = require('../models/FormEntry');
 const { update } = require('../models/User');
 const router = express.Router();
 
@@ -22,6 +19,7 @@ router.post("/update/:formId",
         formItems,
         user
       } = req.body;
+      console.log(user);
       const { formId } = req.params;
       const isExistingFormTitle = await Form.findOne({ formTitle });
       if (isExistingFormTitle && !isExistingFormTitle._id.equals(formId)) {
@@ -56,6 +54,7 @@ router.post("/update/:formId",
           }
         )
       );
+      console.log(newFormItems);
       form.formItems = newFormItems.map(formItem => formItem._id);
       form.formTitle = formTitle;
       form.formSubtitle = formSubtitle;
@@ -67,6 +66,7 @@ router.post("/update/:formId",
           form
         });
     } catch(err) {
+      console.log(err);
       return res
         .status(500)
         .json({
@@ -92,16 +92,84 @@ router.get("/:formId",
   }
 );
 
+
 router.post("/answers/save/:formId",
   async(req, res) => {
     try {
       const { answers } = req.body;
       const formId = req.params.formId;
-    } catch(err) {
 
+      const entryObj = {
+        formId,
+        answers: [...answers],
+      };
+      const newEntry = await FormEntry.create(entryObj);
+      const existingForm = await Form.findById(formId);
+      await existingForm.formEntries.push(newEntry._id);
+      await existingForm.save();
+      return res
+        .status(201)
+        .json({
+          success: true,
+          newEntry
+        });
+    } catch(err) {
+      return res
+        .status(500)
+        .json({
+          success:false,
+          message: "Server error: " + err
+        });
     }
   }
 );
 
+router.get("/toggle-publish/:formId",
+  async(req, res) => {
+    try {
+      const form = await Form
+        .findById(req.params.formId);
+      form.isPublished = form.isPublished === "Yes" ? "No" : "Yes";
+      await form.save();
+      return res
+        .status(200)
+        .json( {form:form} );
+    } catch(err) {
+      console.log(err);
+    }
+  }
+);
+
+router.get("/publish/:formId",
+  async(req, res) => {
+    try {
+      const form = await Form
+        .findById(req.params.formId);
+      form.isPublished = "Yes";
+      await form.save();
+      return res
+        .status(200)
+        .json( {form:form} );
+    } catch(err) {
+      console.log(err);
+    }
+  }
+);
+
+router.get("/unpublish/:formId",
+  async(req, res) => {
+    try {
+      const form = await Form
+        .findById(req.params.formId);
+      form.isPublished = "No";
+      await form.save();
+      return res
+        .status(200)
+        .json( {form:form} );
+    } catch(err) {
+      console.log(err);
+    }
+  }
+);
 
 module.exports = router;

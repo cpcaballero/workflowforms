@@ -12,17 +12,15 @@ const FormSchema = new mongoose.Schema({
     trim: true
   },
   isPublished : {
-    type: Boolean,
-    default: false
+    type: String,
+    default: "No"
   },
-
   formItems: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'FormItem'
     }
   ],
-
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -37,7 +35,12 @@ const FormSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
     required: true
-  }
-
+  },
+  formEntries: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FormEntry"
+    }
+  ]
 });
 module.exports = mongoose.model("Form", FormSchema);

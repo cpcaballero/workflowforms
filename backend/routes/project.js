@@ -9,6 +9,7 @@ const User = require("../models/User");
 const Project = require("../models/Project");
 const Stage = require("../models/Stage");
 const Form = require("../models/Form");
+const FormEntry = require("../models/FormEntry");
 const router = express.Router();
 
 
@@ -21,7 +22,8 @@ router.post("/create",
       const {
         projectName,
         stages,
-        user
+        defaultFormItems,
+        user,
       } = req.body;
 
       const isExistingProjectName = await Project.findOne({ projectName });
@@ -36,11 +38,13 @@ router.post("/create",
           );
       }
       const form = await Form.create({
-        createdBy: user._id
+        createdBy: user._id,
+        formItems: defaultFormItems,
       });
+      console.log(form);
       const project = await Project.create({
         projectName,
-        formId: form._id,
+        form: form._id,
         createdBy: user._id
       });
       const tempStages = stages.map(stage => {
@@ -71,7 +75,34 @@ router.post("/create",
   }
 );
 
+router.get("/all",
+  async(req, res) => {
+    try {
+      const projects = await Project
+        .find()
+        .populate({
+          path: "form",
+          populate: {
+            path: "formEntries",
+            select: "-answers"
+          }
+        })
+        .populate({
+          path: "createdBy",
+          select: "-password -type -birthDate -mobileNumber -gender"
+        })
+        .populate("stages")
 
+      console.table(projects);
+      return res
+        .status(200)
+        .json(projects);
+
+    } catch(err) {
+      console.log(err);
+    }
+  }
+);
 
 
 
